@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/sigap_colors.dart';
-import 'home_page.dart';
+import '../../../core/theme/sigap_colors.dart';
+import '../../warga/home/home_page.dart';
 
 class VerificationSuccessPage extends StatelessWidget {
   final String nama;

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../services/report_service.dart';
-import 'form_laporan_page.dart';
-import 'riwayat_page.dart';
-import 'login_page.dart';
+import '../../../services/report_service.dart';
+import '../../warga/laporan/form_laporan_page.dart';
+import '../../warga/riwayat/riwayat_page.dart';
+import '../../auth/login/login_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+class CamatPage extends StatefulWidget {
+  const CamatPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<CamatPage> createState() => _CamatPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _CamatPageState extends State<CamatPage> {
   int _selectedIndex = 0; 
 
   @override
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -74,8 +74,9 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
           children: [
             _buildNavItem(0, Icons.home_rounded, 'Beranda'),
-            _buildNavItem(1, Icons.warning_amber_rounded, 'Lapor'),
+            _buildNavItem(1, Icons.camera_alt_rounded, 'Kamera'),
             _buildNavItem(2, Icons.history_rounded, 'Riwayat'),
+            // _buildNavItem(3, Icons.person_outline_rounded, 'Profil'),
           ],
         ),
       ),
@@ -211,12 +212,12 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Afan',
+                  'Irsyad',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'warga@sigap.id',
+                  'camat@sigap.id',
                   style: TextStyle(fontSize: 13, color: Colors.black54),
                 ),
                 const SizedBox(height: 20),
@@ -260,7 +261,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Selamat Pagi, Afan!',
+              'Halo!, Irsyad!',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
             ),
             const SizedBox(height: 4),
@@ -283,14 +284,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        // Container(
-        //   padding: const EdgeInsets.all(10),
-        //   decoration: BoxDecoration(
-        //     color: Colors.blue[50],
-        //     shape: BoxShape.circle,
-        //   ),
-        //   child: Icon(Icons.verified_user_outlined, color: Colors.blue[800]),
-        // )
       ],
     );
   }
@@ -307,7 +300,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -316,9 +309,6 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          ),
           const Text(
             'Menemukan Jalan Rusak di Sekitarmu?',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
@@ -367,22 +357,12 @@ class _HomePageState extends State<HomePage> {
           'Status Laporan Saya',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
         ),
-        InkWell(
-          onTap: () {},
-          child: Row(
-            // children: [
-            //   Text('Lihat Semua', style: TextStyle(fontSize: 13, color: Colors.blue[800], fontWeight: FontWeight.bold)),
-            //   Icon(Icons.arrow_forward, size: 16, color: Colors.blue[800]),
-            // ],
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildStatusGrid() {
     final totalDiajukan = ReportService.totalSubmitted;
-    final totalMenunggu = ReportService.totalWaiting;
 
     return GridView.count(
       shrinkWrap: true,
@@ -392,10 +372,9 @@ class _HomePageState extends State<HomePage> {
       mainAxisSpacing: 12,
       childAspectRatio: 1.5,
       children: [
-        _buildStatusCard('Total Diajukan', '$totalDiajukan', 'Laporan', Icons.folder_outlined, Colors.blue[50]!, Colors.blue[800]!),
-        _buildStatusCard('Menunggu', '$totalMenunggu', 'Verifikasi', Icons.hourglass_empty, Colors.orange[50]!, Colors.orange[800]!),
-        _buildStatusCard('Proses PUPR', '2', 'Lokasi', Icons.engineering_outlined, Colors.blue[50]!, Colors.blue[800]!),
-        _buildStatusCard('Tuntas Diperbaiki', '1', 'Jalan', Icons.check_circle_outline, Colors.teal[50]!, Colors.teal[800]!),
+        _buildStatusCard('Total Pengajuan', '$totalDiajukan', 'Laporan', Icons.folder_outlined, Colors.blue[50]!, Colors.blue[800]!),
+        _buildStatusCard('Proses PUPR', '0', 'Lokasi', Icons.engineering_outlined, Colors.blue[50]!, Colors.blue[800]!),
+        _buildStatusCard('Tuntas Diperbaiki', '0', 'Jalan', Icons.check_circle_outline, Colors.teal[50]!, Colors.teal[800]!),
       ],
     );
   }
@@ -473,7 +452,7 @@ class _HomePageState extends State<HomePage> {
               border: Border.all(color: Colors.grey.shade200),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -581,4 +560,5 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
 }

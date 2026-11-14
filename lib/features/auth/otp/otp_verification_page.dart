@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../services/otp_service.dart';
-import '../theme/sigap_colors.dart';
-import '../widgets/numeric_keypad.dart';
-import '../widgets/otp_input_boxes.dart';
+import '../../../services/otp_service.dart';
+import '../../../core/theme/sigap_colors.dart';
+import '../../../widgets/numeric_keypad.dart';
+import '../../../widgets/otp_input_boxes.dart';
 import 'verification_success_page.dart';
 
 class OtpVerificationPage extends StatefulWidget {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/report_model.dart';
-import '../services/report_service.dart';
+import '../../../models/report_model.dart';
+import '../../../services/report_service.dart';
 import 'package:intl/intl.dart';
 
 class RiwayatPage extends StatefulWidget {
-  const RiwayatPage({Key? key}) : super(key: key);
+  const RiwayatPage({super.key});
 
   @override
   State<RiwayatPage> createState() => _RiwayatPageState();
@@ -68,7 +68,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -168,7 +168,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -329,7 +329,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -445,7 +445,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
 
   Widget _buildReportCard(ReportModel report) {
     final dateFormat = DateFormat('dd MMM yyyy');
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -453,7 +453,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -577,7 +577,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -596,7 +596,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8DF4D8), // Light mint green
+                  color: const Color(0xFF8DF4D8),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -647,7 +647,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF064E3B), // Dark green
+                        color: const Color(0xFF064E3B),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -698,12 +698,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9), // Very light blue/grey
+              color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF0F766E)), // Teal
+                const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF0F766E)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -724,7 +724,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF022C22), // Very dark teal
+                backgroundColor: const Color(0xFF022C22),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

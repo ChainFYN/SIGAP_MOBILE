@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/report_model.dart';
-import '../services/report_service.dart';
+import '../../../models/report_model.dart';
+import '../../../services/report_service.dart';
 
 class FormLaporanPage extends StatefulWidget {
   const FormLaporanPage({super.key});
@@ -519,10 +519,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           const SizedBox(height: 10),
 
           // List Foto Terunggah
-          ..._photos.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final photo = entry.value;
-            return Container(
+          for (final entry in _photos.asMap().entries)
+            Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -532,7 +530,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               ),
               child: Row(
                 children: [
-                  // Thumbnail preview
                   Container(
                     width: 52,
                     height: 52,
@@ -559,7 +556,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              photo.size,
+                              entry.value.size,
                               style: const TextStyle(
                                 fontSize: 8,
                                 color: Colors.white,
@@ -572,13 +569,12 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Info nama dan label
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          photo.fileName,
+                          entry.value.fileName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -597,7 +593,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                photo.tag,
+                                entry.value.tag,
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -607,7 +603,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              photo.time,
+                              entry.value.time,
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF94A3B8),
@@ -624,12 +620,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                       color: Color(0xFF94A3B8),
                       size: 22,
                     ),
-                    onPressed: () => _hapusFoto(idx),
+                    onPressed: () => _hapusFoto(entry.key),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
 
           const SizedBox(height: 12),
 

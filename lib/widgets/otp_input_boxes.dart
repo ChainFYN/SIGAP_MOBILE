@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/sigap_colors.dart';
+import '../core/theme/sigap_colors.dart';
 
 class OtpInputBoxes extends StatelessWidget {
   final String value;
