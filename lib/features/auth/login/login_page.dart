@@ -47,8 +47,9 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final Widget tujuan =
-        akun['role'] == 'camat' ? const CamatPage() : const HomePage();
+    final Widget tujuan = akun['role'] == 'camat'
+        ? const CamatPage()
+        : const HomePage();
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -96,10 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Text(
                     'Sistem Informasi Pelaporan Kerusakan Jalan (SIGAP) Kab. Jember',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                   ),
                   const SizedBox(height: 30),
                   Container(
@@ -128,27 +126,40 @@ class _LoginPageState extends State<LoginPage> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               final v = value?.trim() ?? '';
-                              if (v.isEmpty) return 'NIK atau email wajib diisi';
+                              if (v.isEmpty)
+                                return 'NIK atau email wajib diisi';
                               return null;
                             },
                             decoration: InputDecoration(
                               hintText: 'Masukkan Email Anda',
-                              prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF64748B)),
+                              prefixIcon: const Icon(
+                                Icons.person_outline,
+                                color: Color(0xFF64748B),
+                              ),
                               filled: true,
                               fillColor: const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.5,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 18),
@@ -165,16 +176,24 @@ class _LoginPageState extends State<LoginPage> {
                             controller: passwordController,
                             obscureText: obscurePassword,
                             validator: (value) {
-                              if ((value ?? '').isEmpty) return 'Kata sandi wajib diisi';
+                              if ((value ?? '').isEmpty)
+                                return 'Kata sandi wajib diisi';
                               return null;
                             },
                             decoration: InputDecoration(
                               hintText: 'Minimial 8 karakter',
-                              prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: Color(0xFF64748B),
+                              ),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                                onPressed: () => setState(
+                                  () => obscurePassword = !obscurePassword,
+                                ),
                                 icon: Icon(
-                                  obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                   color: const Color(0xFF64748B),
                                 ),
                               ),
@@ -182,17 +201,26 @@ class _LoginPageState extends State<LoginPage> {
                               fillColor: const Color(0xFFF8FAFC),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.5,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -200,7 +228,8 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               Checkbox(
                                 value: rememberMe,
-                                onChanged: (v) => setState(() => rememberMe = v ?? false),
+                                onChanged: (v) =>
+                                    setState(() => rememberMe = v ?? false),
                                 activeColor: const Color(0xFF0F5DCB),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
