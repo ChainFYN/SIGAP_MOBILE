@@ -126,8 +126,9 @@ class _LoginPageState extends State<LoginPage> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               final v = value?.trim() ?? '';
-                              if (v.isEmpty)
+                              if (v.isEmpty) {
                                 return 'NIK atau email wajib diisi';
+                              }
                               return null;
                             },
                             decoration: InputDecoration(
@@ -176,8 +177,9 @@ class _LoginPageState extends State<LoginPage> {
                             controller: passwordController,
                             obscureText: obscurePassword,
                             validator: (value) {
-                              if ((value ?? '').isEmpty)
+                              if ((value ?? '').isEmpty) {
                                 return 'Kata sandi wajib diisi';
+                              }
                               return null;
                             },
                             decoration: InputDecoration(

@@ -29,28 +29,38 @@ class _HomePageState extends State<HomePage> {
       case 0:
         return LayoutBuilder(
           builder: (context, constraints) {
-            final maxContentWidth = constraints.maxWidth > 700 ? 680.0 : constraints.maxWidth;
-            final statusColumns = constraints.maxWidth < 420 ? 2 : 4;
-            final horizontalPadding = constraints.maxWidth < 360 ? 10.0 : 14.0;
+            final mobileWidth = constraints.maxWidth;
+            final maxContentWidth = mobileWidth > 520 ? 520.0 : mobileWidth;
+            final horizontalPadding = mobileWidth < 340
+                ? 10.0
+                : mobileWidth < 390
+                    ? 12.0
+                    : 16.0;
+            final statusColumns = 2;
 
             return Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildGreetingSection(),
-                      const SizedBox(height: 24),
-                      _buildStatusHeader(),
-                      const SizedBox(height: 16),
-                      _buildStatusGrid(statusColumns),
-                      if (ReportService.reports.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        _buildRecentReports(),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 14),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGreetingSection(),
+                        const SizedBox(height: 20),
+                        _buildStatusHeader(),
+                        const SizedBox(height: 14),
+                        _buildStatusGrid(statusColumns),
+                        const SizedBox(height: 18),
+                        _buildWorkflowTimeline(),
+                        if (ReportService.reports.isNotEmpty) ...[
+                          const SizedBox(height: 18),
+                          _buildRecentReports(),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -176,44 +186,50 @@ class _HomePageState extends State<HomePage> {
       elevation: 0,
       toolbarHeight: 70,
       titleSpacing: 0,
-      title: Padding(
-        padding: const EdgeInsets.only(left: 12.0, right: 12.0),
-        child: Row(
-          children: [
-            Icon(Icons.location_on, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            const Text(
-              'SIGAP',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 360;
+
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+            child: Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.white, size: compact ? 16 : 18),
+                const SizedBox(width: 8),
+                Text(
+                  'SIGAP',
+                  style: TextStyle(
+                    fontSize: compact ? 17 : 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Warga',
+                  style: TextStyle(
+                    fontSize: compact ? 10 : 12,
+                    color: const Color(0xFFBFDBFE),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'Warga',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFFBFDBFE),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 14.0),
+          padding: const EdgeInsets.only(right: 12.0),
           child: Row(
             children: [
-              const Text(
+              Text(
                 'Warga Test\nPelapor Aktif',
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
-                  height: 1.3,
+                  fontSize: 9,
+                  height: 1.25,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -221,13 +237,13 @@ class _HomePageState extends State<HomePage> {
               GestureDetector(
                 onTap: _showAccountPopup,
                 child: Container(
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  child: const Icon(Icons.person, size: 18, color: Colors.white),
+                  child: const Icon(Icons.person, size: 17, color: Colors.white),
                 ),
               ),
             ],
@@ -312,10 +328,13 @@ class _HomePageState extends State<HomePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 360;
+        final padding = compact ? 14.0 : 18.0;
+        final titleSize = compact ? 26.0 : 30.0;
+        final textSize = compact ? 11.5 : 12.0;
 
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.all(compact ? 14 : 18),
+          padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             color: const Color(0xFF1E3A8A),
             borderRadius: BorderRadius.circular(16),
@@ -327,21 +346,21 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     Text(
                       'Selamat Datang, Ahmad Pratama',
                       style: TextStyle(
-                        fontSize: compact ? 24 : 20,
+                        fontSize: titleSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
                       'Bersama Dinas PUBina Marga & PUPR Jember, pantau dan laporkan jalan rusak demi keselamatan bersama.',
                       style: TextStyle(
-                        fontSize: compact ? 11 : 12,
+                        fontSize: textSize,
                         color: Colors.blue[100],
                         height: 1.4,
                       ),
@@ -349,7 +368,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(width: compact ? 8 : 12),
+              SizedBox(width: compact ? 10 : 12),
               Container(
                 width: compact ? 42 : 52,
                 height: compact ? 42 : 52,
@@ -413,7 +432,7 @@ class _HomePageState extends State<HomePage> {
       crossAxisCount: crossAxisCount,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 1.05,
+      childAspectRatio: 1.0,
       children: [
         _buildStatusCard('Total Aduan', '$totalDiajukan', Icons.folder_rounded, const Color(0xFFE2E8F0), const Color(0xFF1E293B)),
         _buildStatusCard('Diproses', '$totalMenunggu', Icons.hourglass_top_rounded, const Color(0xFFDBEAFE), const Color(0xFF1D4ED8)),
@@ -431,36 +450,184 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 120;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: compact ? 18 : 20, color: iconColor),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                count,
+                style: TextStyle(
+                  fontSize: compact ? 22 : 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: compact ? 10.5 : 11,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildWorkflowTimeline() {
+    final steps = [
+      {
+        'label': 'Langkah 1',
+        'title': 'Buat Laporan',
+        'desc': 'Sertakan foto kondisi jalan, alamat jalan, desa, dan koordinat GPS.',
+        'icon': Icons.photo_camera_rounded,
+        'color': const Color(0xFF0E2A6D),
+      },
+      {
+        'label': 'Langkah 2',
+        'title': 'Validasi Kecamatan',
+        'desc': 'Kecamatan memverifikasi kebenaran dan tingkat urgensi aduan.',
+        'icon': Icons.checklist_rounded,
+        'color': const Color(0xFFF2A500),
+      },
+      {
+        'label': 'Langkah 3',
+        'title': 'Penanganan Dinas PUPR',
+        'desc': 'UPT Bina Marga memberikan SPK dan menurunkan tim lapangan.',
+        'icon': Icons.shield_rounded,
+        'color': const Color(0xFF0F6DFF),
+      },
+      {
+        'label': 'Langkah 4',
+        'title': 'Selesai & FAST Terbit',
+        'desc': 'Perbaikan rampung 100% dan bukti fisik dipublikasikan di sistem.',
+        'icon': Icons.check_rounded,
+        'color': const Color(0xFF1FAE74),
+      },
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF2F4F7),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            count,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+          const Center(
+            child: Text(
+              'ALUR KERJA PENANGANAN SIGAP',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
+                color: Color(0xFF6F86A6),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          const SizedBox(height: 20),
+          ...List.generate(steps.length, (index) {
+            final step = steps[index];
+            final isLast = index == steps.length - 1;
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: step['color'] as Color,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!isLast)
+                        Container(
+                          width: 2,
+                          height: 60,
+                          color: const Color(0xFFD8E0EA),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            step['label'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            step['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            step['desc'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF475569),
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
