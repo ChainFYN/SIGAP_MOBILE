@@ -29,7 +29,7 @@ class ReportModel {
 
   ReportModel({
     required this.id,
-    required this.kodeTiket,
+    this.kodeTiket = '',
     required this.kecamatan,
     required this.desa,
     required this.jalanPatokan,
