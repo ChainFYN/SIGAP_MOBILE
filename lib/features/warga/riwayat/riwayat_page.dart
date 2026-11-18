@@ -11,9 +11,24 @@ class RiwayatPage extends StatefulWidget {
 }
 
 class _RiwayatPageState extends State<RiwayatPage> {
+  final _reportService = ReportService();
   String _selectedFilter = 'Semua';
+  bool _isLoading = true;
 
   @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    await _reportService.fetchReports();
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -56,7 +71,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.history, color: Colors.blue[800]),
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -100,34 +115,47 @@ class _RiwayatPageState extends State<RiwayatPage> {
             ),
           ),
           Expanded(
-            child: ValueListenableBuilder<List<ReportModel>>(
-              valueListenable: ReportService.reportsNotifier,
-              builder: (context, reports, child) {
-                if (reports.isEmpty) {
-                  // Show dummy data if empty to match the design template
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildDummyCard1(),
-                      const SizedBox(height: 16),
-                      _buildDummyCard2(),
-                      const SizedBox(height: 16),
-                      _buildDummyCard3(),
-                    ],
-                  );
-                }
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF1E88E5)),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ValueListenableBuilder<List<ReportModel>>(
+                      valueListenable: ReportService.reportsNotifier,
+                      builder: (context, reports, child) {
+                        if (reports.isEmpty) {
+                          return ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 80),
+                              Center(
+                                child: Text(
+                                  'Belum ada laporan yang diajukan.',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: reports.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final report = reports[index];
-                    return _buildReportCard(report);
-                  },
-                );
-              },
-            ),
+                        return ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          itemCount: reports.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final report = reports[index];
+                            return _buildReportCard(report);
+                          },
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -211,16 +239,13 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
             'Pengerjaan Hotmix Jalan Sukamaju',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -232,7 +257,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   width: 80,
                   height: 80,
                   color: Colors.grey[300],
-                  child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+                  child: const Center(
+                    child: Icon(Icons.image, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -242,12 +269,19 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 4),
                         const Expanded(
                           child: Text(
                             'Jl. Sukamaju KM 4',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -284,7 +318,13 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
                     Text('Progres Lapangan', style: TextStyle(fontSize: 12)),
-                    Text('75% Selesai', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      '75% Selesai',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -359,16 +399,13 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
             'Saluran Drainase Ambles',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -380,7 +417,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   width: 80,
                   height: 80,
                   color: Colors.grey[300],
-                  child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+                  child: const Center(
+                    child: Icon(Icons.image, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -390,12 +429,19 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 4),
                         const Expanded(
                           child: Text(
                             'Jl. Flamboyan Gang 3',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -434,7 +480,10 @@ class _RiwayatPageState extends State<RiwayatPage> {
               ),
               child: Text(
                 'Lihat Tiket Pengaduan →',
-                style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.blue[800],
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -483,16 +532,13 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             report.kategori,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -504,7 +550,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   width: 80,
                   height: 80,
                   color: Colors.grey[200],
-                  child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+                  child: const Center(
+                    child: Icon(Icons.image, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -514,12 +562,19 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             report.jalanPatokan,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -560,7 +615,10 @@ class _RiwayatPageState extends State<RiwayatPage> {
               ),
               child: Text(
                 'Lihat Tiket Pengaduan →',
-                style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.blue[800],
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -601,7 +659,11 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.check_circle_outline, size: 12, color: Color(0xFF064E3B)),
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 12,
+                      color: Color(0xFF064E3B),
+                    ),
                     SizedBox(width: 4),
                     Text(
                       'Tuntas Diperbaiki',
@@ -613,7 +675,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -638,14 +700,19 @@ class _RiwayatPageState extends State<RiwayatPage> {
                       width: 80,
                       height: 80,
                       color: Colors.grey[300],
-                      child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+                      child: const Center(
+                        child: Icon(Icons.image, color: Colors.grey),
+                      ),
                     ),
                   ),
                   Positioned(
                     bottom: 4,
                     right: 4,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF064E3B),
                         borderRadius: BorderRadius.circular(4),
@@ -665,12 +732,20 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.verified_outlined, size: 14, color: Color(0xFF14B8A6)),
+                        const Icon(
+                          Icons.verified_outlined,
+                          size: 14,
+                          color: Color(0xFF14B8A6),
+                        ),
                         const SizedBox(width: 4),
                         const Expanded(
                           child: Text(
                             'Jl. Raya Mayor Oking No. 88',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
                         ),
                       ],
@@ -703,7 +778,11 @@ class _RiwayatPageState extends State<RiwayatPage> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.shield_outlined, size: 16, color: Color(0xFF0F766E)),
+                const Icon(
+                  Icons.shield_outlined,
+                  size: 16,
+                  color: Color(0xFF0F766E),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -735,7 +814,10 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 children: const [
                   Text(
                     'Lihat Berita Acara & Foto Selesai',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.check, size: 16, color: Colors.white),
@@ -748,4 +830,3 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 }
-

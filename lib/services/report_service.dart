@@ -20,6 +20,28 @@ class ReportService {
     reportsNotifier.value = [report, ...reportsNotifier.value];
   }
 
+  /// Mengambil daftar laporan asli dari Laravel (GET /api/laporan)
+  Future<List<ReportModel>> fetchReports() async {
+    try {
+      final response = await _dio.get(ApiConstants.laporan);
+
+      if (response.data['success'] == true) {
+        final List rawList = response.data['data'] ?? [];
+        final List<ReportModel> listLaporan = rawList
+            .map((item) => ReportModel.fromJson(item))
+            .toList();
+
+        // Update notifier agar seluruh UI yang mendengarkan otomatis ter-refresh
+        reportsNotifier.value = listLaporan;
+        return listLaporan;
+      }
+      return reportsNotifier.value;
+    } catch (e) {
+      debugPrint('Error fetchReports: $e');
+      return reportsNotifier.value;
+    }
+  }
+
   /// Mengirimkan Laporan Baru dengan format Multipart/Form-Data ke Laravel
   Future<Map<String, dynamic>> createReport({
     required int idJalan,

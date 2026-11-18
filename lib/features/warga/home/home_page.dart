@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../models/report_model.dart';
 import '../../../services/report_service.dart';
 import '../laporan/form_laporan_page.dart';
 import '../riwayat/riwayat_page.dart';
@@ -13,8 +14,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final _reportService = ReportService();
 
   @override
+  void initState() {
+    super.initState();
+    // Ambil laporan terbaru dari Laravel saat Beranda dibuka
+    _reportService.fetchReports();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -34,15 +42,18 @@ class _HomePageState extends State<HomePage> {
             final horizontalPadding = mobileWidth < 340
                 ? 10.0
                 : mobileWidth < 390
-                    ? 12.0
-                    : 16.0;
+                ? 12.0
+                : 16.0;
             final statusColumns = 2;
 
             return Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 14),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 14,
+                  ),
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: Column(
@@ -55,10 +66,18 @@ class _HomePageState extends State<HomePage> {
                         _buildStatusGrid(statusColumns),
                         const SizedBox(height: 18),
                         _buildWorkflowTimeline(),
-                        if (ReportService.reports.isNotEmpty) ...[
-                          const SizedBox(height: 18),
-                          _buildRecentReports(),
-                        ],
+                        ValueListenableBuilder<List<ReportModel>>(
+                          valueListenable: ReportService.reportsNotifier,
+                          builder: (context, reports, child) {
+                            if (reports.isEmpty) return const SizedBox.shrink();
+                            return Column(
+                              children: [
+                                const SizedBox(height: 18),
+                                _buildRecentReports(),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -97,8 +116,12 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(child: _buildNavItem(0, Icons.home_rounded, 'Beranda')),
-              Expanded(child: _buildNavItem(1, Icons.add_rounded, 'Buat Lapor')),
-              Expanded(child: _buildNavItem(2, Icons.history_rounded, 'Riwayat')),
+              Expanded(
+                child: _buildNavItem(1, Icons.add_rounded, 'Buat Lapor'),
+              ),
+              Expanded(
+                child: _buildNavItem(2, Icons.history_rounded, 'Riwayat'),
+              ),
             ],
           ),
         ),
@@ -115,9 +138,7 @@ class _HomePageState extends State<HomePage> {
         if (index == 1) {
           await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const FormLaporanPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const FormLaporanPage()),
           );
           if (mounted) {
             setState(() {
@@ -147,11 +168,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  icon,
-                  size: 30,
-                  color: Colors.white,
-                ),
+                child: Icon(icon, size: 30, color: Colors.white),
               )
             : SizedBox(
                 height: 52,
@@ -161,15 +178,21 @@ class _HomePageState extends State<HomePage> {
                     Icon(
                       icon,
                       size: 24,
-                      color: isActive ? const Color(0xFF1E3A8A) : Colors.grey[400],
+                      color: isActive
+                          ? const Color(0xFF1E3A8A)
+                          : Colors.grey[400],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                        color: isActive ? const Color(0xFF1E3A8A) : Colors.grey[500],
+                        fontWeight: isActive
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isActive
+                            ? const Color(0xFF1E3A8A)
+                            : Colors.grey[500],
                       ),
                     ),
                   ],
@@ -194,7 +217,11 @@ class _HomePageState extends State<HomePage> {
             padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
             child: Row(
               children: [
-                Icon(Icons.location_on, color: Colors.white, size: compact ? 16 : 18),
+                Icon(
+                  Icons.location_on,
+                  color: Colors.white,
+                  size: compact ? 16 : 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'SIGAP',
@@ -243,12 +270,16 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: const Icon(Icons.person, size: 17, color: Colors.white),
+                  child: const Icon(
+                    Icons.person,
+                    size: 17,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -279,7 +310,11 @@ class _HomePageState extends State<HomePage> {
                 CircleAvatar(
                   radius: 32,
                   backgroundColor: Colors.blue[800],
-                  child: const Icon(Icons.person, color: Colors.white, size: 36),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 36,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -301,7 +336,9 @@ class _HomePageState extends State<HomePage> {
                       Navigator.pop(sheetContext);
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
                         (route) => false,
                       );
                     },
@@ -377,7 +414,11 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.people_alt_rounded, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ],
           ),
@@ -434,15 +475,45 @@ class _HomePageState extends State<HomePage> {
       mainAxisSpacing: 10,
       childAspectRatio: 1.0,
       children: [
-        _buildStatusCard('Total Aduan', '$totalDiajukan', Icons.folder_rounded, const Color(0xFFE2E8F0), const Color(0xFF1E293B)),
-        _buildStatusCard('Diproses', '$totalMenunggu', Icons.hourglass_top_rounded, const Color(0xFFDBEAFE), const Color(0xFF1D4ED8)),
-        _buildStatusCard('Selesai', '2', Icons.check_circle_rounded, const Color(0xFFD1FAE5), const Color(0xFF059669)),
-        _buildStatusCard('Validasi', '1', Icons.verified_rounded, const Color(0xFFFEF3C7), const Color(0xFFD97706)),
+        _buildStatusCard(
+          'Total Aduan',
+          '$totalDiajukan',
+          Icons.folder_rounded,
+          const Color(0xFFE2E8F0),
+          const Color(0xFF1E293B),
+        ),
+        _buildStatusCard(
+          'Diproses',
+          '$totalMenunggu',
+          Icons.hourglass_top_rounded,
+          const Color(0xFFDBEAFE),
+          const Color(0xFF1D4ED8),
+        ),
+        _buildStatusCard(
+          'Selesai',
+          '2',
+          Icons.check_circle_rounded,
+          const Color(0xFFD1FAE5),
+          const Color(0xFF059669),
+        ),
+        _buildStatusCard(
+          'Validasi',
+          '1',
+          Icons.verified_rounded,
+          const Color(0xFFFEF3C7),
+          const Color(0xFFD97706),
+        ),
       ],
     );
   }
 
-  Widget _buildStatusCard(String title, String count, IconData icon, Color bg, Color iconColor) {
+  Widget _buildStatusCard(
+    String title,
+    String count,
+    IconData icon,
+    Color bg,
+    Color iconColor,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
@@ -496,7 +567,8 @@ class _HomePageState extends State<HomePage> {
       {
         'label': 'Langkah 1',
         'title': 'Buat Laporan',
-        'desc': 'Sertakan foto kondisi jalan, alamat jalan, desa, dan koordinat GPS.',
+        'desc':
+            'Sertakan foto kondisi jalan, alamat jalan, desa, dan koordinat GPS.',
         'icon': Icons.photo_camera_rounded,
         'color': const Color(0xFF0E2A6D),
       },
@@ -517,7 +589,8 @@ class _HomePageState extends State<HomePage> {
       {
         'label': 'Langkah 4',
         'title': 'Selesai & FAST Terbit',
-        'desc': 'Perbaikan rampung 100% dan bukti fisik dipublikasikan di sistem.',
+        'desc':
+            'Perbaikan rampung 100% dan bukti fisik dipublikasikan di sistem.',
         'icon': Icons.check_rounded,
         'color': const Color(0xFF1FAE74),
       },
@@ -526,9 +599,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF2F4F7),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFFF2F4F7)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -692,7 +763,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),
@@ -711,7 +785,11 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -729,14 +807,15 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.timeline_rounded, size: 16, color: Color(0xFF64748B)),
+                    const Icon(
+                      Icons.timeline_rounded,
+                      size: 16,
+                      color: Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 6),
                     const Text(
                       'Progres Fisik Lapangan',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
-                      ),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     ),
                     const Spacer(),
                     Text(
@@ -756,7 +835,9 @@ class _HomePageState extends State<HomePage> {
                     value: 0.75,
                     minHeight: 8,
                     backgroundColor: const Color(0xFFE2E8F0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF3B82F6),
+                    ),
                   ),
                 ),
               ],
