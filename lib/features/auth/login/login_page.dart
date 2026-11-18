@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../warga/home/home_page.dart';
 import '../../camat/dashboard/camat_page.dart';
 import '../register/register_page.dart';
+import '../../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,14 +15,16 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final _authService = AuthService();
 
+  bool _isLoading = false;
   bool obscurePassword = true;
   bool rememberMe = false;
 
-  static const Map<String, Map<String, String>> _akunDemo = {
-    'warga@sigap.id': {'password': 'warga123', 'role': 'warga'},
-    'camat@sigap.id': {'password': 'camat123', 'role': 'camat'},
-  };
+  // static const Map<String, Map<String, String>> _akunDemo = {
+  //   'warga@sigap.id': {'password': 'warga123', 'role': 'warga'},
+  //   'camat@sigap.id': {'password': 'camat123', 'role': 'camat'},
+  // };
 
   @override
   void dispose() {
@@ -30,32 +33,53 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final email = emailController.text.trim().toLowerCase();
-    final password = passwordController.text;
-    final akun = _akunDemo[email];
+    setState(() => _isLoading = true);
 
-    if (akun == null || akun['password'] != password) {
+    final loginValue = emailController.text.trim();
+    final password = passwordController.text;
+
+    final result = await _authService.login(
+      login: loginValue,
+      password: password,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email atau password salah'),
+        SnackBar(
+          content: Text(result['message'] ?? 'Login berhasil!'),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
+
+      // Cek peran pengguna dari data respons Laravel
+      final userData = result['data'];
+      final roleName = (userData?['peran']?['nama'] ?? '')
+          .toString()
+          .toLowerCase();
+
+      final Widget tujuan = (roleName == 'kecamatan')
+          ? const CamatPage()
+          : const HomePage();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => tujuan),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Login gagal'),
           backgroundColor: Colors.red,
         ),
       );
-      return;
     }
-
-    final Widget tujuan = akun['role'] == 'camat'
-        ? const CamatPage()
-        : const HomePage();
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => tujuan),
-      (route) => false,
-    );
   }
 
   @override
@@ -126,8 +150,9 @@ class _LoginPageState extends State<LoginPage> {
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               final v = value?.trim() ?? '';
-                              if (v.isEmpty)
+                              if (v.isEmpty) {
                                 return 'NIK atau email wajib diisi';
+                              }
                               return null;
                             },
                             decoration: InputDecoration(
@@ -176,8 +201,9 @@ class _LoginPageState extends State<LoginPage> {
                             controller: passwordController,
                             obscureText: obscurePassword,
                             validator: (value) {
-                              if ((value ?? '').isEmpty)
+                              if ((value ?? '').isEmpty) {
                                 return 'Kata sandi wajib diisi';
+                              }
                               return null;
                             },
                             decoration: InputDecoration(
@@ -248,7 +274,9 @@ class _LoginPageState extends State<LoginPage> {
                             width: double.infinity,
                             height: 52,
                             child: ElevatedButton(
-                              onPressed: _login,
+                              onPressed: _isLoading
+                                  ? null
+                                  : _login, // Cegah double tap saat loading
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0F5DCB),
                                 foregroundColor: Colors.white,
@@ -257,20 +285,33 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 elevation: 0,
                               ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Masuk ke Akun SIGAP',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Masuk ke Akun SIGAP',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 18,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward_rounded, size: 18),
-                                ],
-                              ),
                             ),
                           ),
                           const SizedBox(height: 18),

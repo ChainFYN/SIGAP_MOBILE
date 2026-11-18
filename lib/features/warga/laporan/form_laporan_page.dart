@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../models/report_model.dart';
 import '../../../services/report_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class FormLaporanPage extends StatefulWidget {
   const FormLaporanPage({super.key});
@@ -30,6 +32,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   // Deskripsi
   late final TextEditingController _deskripsiController;
 
+  // Instance Service & Image Picker
+  final _reportService = ReportService();
+  final ImagePicker _picker = ImagePicker();
+
+  // File foto asli yang dipilih dari kamera/galeri
+  File? _selectedFile;
+  bool _isSubmitting = false;
+
   // Daftar Foto
   final List<ReportPhoto> _photos = [
     ReportPhoto(
@@ -49,7 +59,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   @override
   void initState() {
     super.initState();
-    _jalanController = TextEditingController(text: 'Jl. Brawijaya No. 42 (Depan Pasar)');
+    _jalanController = TextEditingController(
+      text: 'Jl. Brawijaya No. 42 (Depan Pasar)',
+    );
     _deskripsiController = TextEditingController();
     _deskripsiController.addListener(() {
       setState(() {});
@@ -71,7 +83,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       if (mounted) {
         setState(() {
           _isRefreshingGps = false;
-          _koordinat = '-8.1789${(100 + (DateTime.now().millisecond % 800))}, 113.653${(100 + (DateTime.now().microsecond % 800))} • Akurasi ± 1.8 meter';
+          _koordinat =
+              '-8.1789${(100 + (DateTime.now().millisecond % 800))}, 113.653${(100 + (DateTime.now().microsecond % 800))} • Akurasi ± 1.8 meter';
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -145,32 +158,65 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  void _simpanFotoBaru(String sumber) {
-    final now = DateTime.now();
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')} WIB';
-    final index = _photos.length + 1;
-    setState(() {
-      _photos.add(
-        ReportPhoto(
-          fileName: 'foto_bukti_lapangan_$index.jpg',
-          size: '1.${index + 3} MB',
-          tag: index == 3 ? 'Objek Ukur' : 'Tampak Samping',
-          time: timeStr,
+  Future<void> _simpanFotoBaru(String sumber) async {
+    final ImageSource source = (sumber == 'kamera')
+        ? ImageSource.camera
+        : ImageSource.gallery;
+
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality:
+            80, // Kompres sedikit agar proses upload cepat & di bawah batas 5MB
+      );
+
+      if (pickedFile == null) return; // Dibatalkan pengguna
+
+      final file = File(pickedFile.path);
+      final fileSizeInBytes = await file.length();
+      final fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toStringAsFixed(1);
+      final fileName = pickedFile.name;
+
+      final now = DateTime.now();
+      final timeStr =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')} WIB';
+
+      setState(() {
+        _selectedFile = file; // Simpan file fisik untuk dikirim ke backend
+        _photos
+            .clear(); // Backend Laravel saat ini memvalidasi 1 file utama ('foto')
+        _photos.add(
+          ReportPhoto(
+            fileName: fileName,
+            size: '$fileSizeInMB MB',
+            tag: sumber == 'kamera' ? 'Foto Kamera' : 'Foto Galeri',
+            time: timeStr,
+          ),
+        );
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Foto $fileName berhasil dipilih!'),
+          backgroundColor: const Color(0xFF059669),
         ),
       );
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Foto $index berhasil ditambahkan'),
-        backgroundColor: const Color(0xFF059669),
-      ),
-    );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _hapusFoto(int index) {
     final removed = _photos[index];
     setState(() {
       _photos.removeAt(index);
+      _selectedFile = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -187,19 +233,60 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  void _submitLaporan() {
-    if (_formKey.currentState!.validate()) {
-      if (_photos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mohon unggah minimal 1 foto bukti lapangan!'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-        return;
-      }
+  Future<void> _submitLaporan() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // Buat data laporan baru
+    if (_selectedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon ambil foto bukti lapangan terlebih dahulu!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    // Pemetaan kategori UI ke id_kategori di database Laravel Anda:
+    // 1: Berlubang, 2: Bergelombang, 3: Retak, 4: Ambles/Longsor, 5: Lainnya
+    int idKategori = 1;
+    if (_selectedKategori.contains('Bergelombang')) {
+      idKategori = 2;
+    } else if (_selectedKategori.contains('Retak')) {
+      idKategori = 3;
+    } else if (_selectedKategori.contains('Longsor') ||
+        _selectedKategori.contains('Ambles')) {
+      idKategori = 4;
+    }
+
+    // Default id_jalan = 1 (Jl. Kalimantan)
+    const int idJalan = 1;
+
+    // Tingkat bahaya harus persis: 'Rendah', 'Sedang', atau 'Bahaya Tinggi'
+    String urgensi = 'Bahaya Tinggi';
+    if (_selectedUrgensi.contains('Rendah')) {
+      urgensi = 'Rendah';
+    } else if (_selectedUrgensi.contains('Sedang')) {
+      urgensi = 'Sedang';
+    }
+
+    // Eksekusi kirim form-data teks + file foto ke Laravel
+    final result = await _reportService.createReport(
+      idJalan: idJalan,
+      idKategori: idKategori,
+      tingkatBahaya: urgensi,
+      deskripsi: _deskripsiController.text.trim(),
+      imageFile: _selectedFile!,
+      latitude: -8.1789,
+      longitude: 113.6532,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result['success'] == true) {
+      // Buat instance lokal untuk update UI
       final newReport = ReportModel(
         id: 'LAP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
         kecamatan: _selectedKecamatan,
@@ -212,19 +299,18 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         photos: List.from(_photos),
         createdAt: DateTime.now(),
       );
-
-      // Simpan ke service
       ReportService.addReport(newReport);
 
-      // Tampilkan notifikasi berhasil dan kembali ke halaman sebelumnya
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text('Laporan berhasil diajukan dan disimpan!'),
+                child: Text(
+                  result['message'] ?? 'Laporan berhasil terkirim ke server!',
+                ),
               ),
             ],
           ),
@@ -233,8 +319,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         ),
       );
 
-      // Kembali ke halaman sebelumnya dengan membawa data laporan
       Navigator.pop(context, newReport);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Gagal mengirim laporan'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -275,7 +367,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       backgroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: Color(0xFF1E293B),
+          size: 20,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -310,7 +406,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             radius: 16,
             child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
-        )
+        ),
       ],
     );
   }
@@ -332,11 +428,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         SizedBox(height: 8),
         Text(
           'Laporkan kondisi jalan berlubang, retak, atau ambles secara presisi untuk verifikasi tim teknis lapangan.',
-          style: TextStyle(
-            fontSize: 13,
-            color: Color(0xFF64748B),
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
         ),
       ],
     );
@@ -467,14 +559,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                   const Text(
                     'Mendukung kamera smartphone langsung atau galeri',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -550,7 +642,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           left: 4,
                           bottom: 4,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(4),
@@ -587,7 +682,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(4),
@@ -640,7 +738,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.shield_outlined, color: Color(0xFFFBBF24), size: 18),
+                    Icon(
+                      Icons.shield_outlined,
+                      color: Color(0xFFFBBF24),
+                      size: 18,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Panduan Validitas Laporan Warga',
@@ -681,17 +783,28 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 2),
-          child: Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
+          child: Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 14,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(fontSize: 11, color: Color(0xFFE2E8F0), height: 1.35),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFFE2E8F0),
+                height: 1.35,
+              ),
               children: [
                 TextSpan(
                   text: boldPrefix,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 TextSpan(text: text),
               ],
@@ -779,7 +892,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           color: Color(0xFF0F172A),
                         ),
                         children: [
-                          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ],
                       ),
                     ),
@@ -788,14 +904,21 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                       initialValue: _selectedKecamatan,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFCBD5E1),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFCBD5E1),
+                          ),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
@@ -834,7 +957,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           color: Color(0xFF0F172A),
                         ),
                         children: [
-                          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ],
                       ),
                     ),
@@ -843,14 +969,21 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                       initialValue: _selectedDesa,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFCBD5E1),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFCBD5E1),
+                          ),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
@@ -890,7 +1023,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 color: Color(0xFF0F172A),
               ),
               children: [
-                TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                TextSpan(
+                  text: '*',
+                  style: TextStyle(color: Colors.red),
+                ),
               ],
             ),
           ),
@@ -905,8 +1041,15 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             },
             style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.near_me_outlined, color: Color(0xFF64748B), size: 20),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              prefixIcon: const Icon(
+                Icons.near_me_outlined,
+                color: Color(0xFF64748B),
+                size: 20,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -980,7 +1123,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2563EB),
                     side: const BorderSide(color: Color(0xFF93C5FD)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     visualDensity: VisualDensity.compact,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -1105,10 +1251,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFFFF7ED) : const Color(0xFFFAFAFA),
+                    color: isSelected
+                        ? const Color(0xFFFFF7ED)
+                        : const Color(0xFFFAFAFA),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFFEA580C) : const Color(0xFFE2E8F0),
+                      color: isSelected
+                          ? const Color(0xFFEA580C)
+                          : const Color(0xFFE2E8F0),
                       width: isSelected ? 1.5 : 1.0,
                     ),
                   ),
@@ -1121,13 +1271,17 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFFEDD5) : const Color(0xFFF1F5F9),
+                              color: isSelected
+                                  ? const Color(0xFFFFEDD5)
+                                  : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Icon(
                               icon,
                               size: 18,
-                              color: isSelected ? const Color(0xFFEA580C) : const Color(0xFF64748B),
+                              color: isSelected
+                                  ? const Color(0xFFEA580C)
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -1138,7 +1292,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                              color: isSelected
+                                  ? const Color(0xFF0F172A)
+                                  : const Color(0xFF334155),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -1158,7 +1314,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           right: 0,
                           top: 0,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEA580C),
                               borderRadius: BorderRadius.circular(4),
@@ -1232,10 +1391,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           const SizedBox(height: 4),
           const Text(
             'Estimasi potensi risiko terhadap pengguna jalan',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 14),
 
@@ -1248,7 +1404,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 color: Color(0xFF0F172A),
               ),
               children: [
-                TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                TextSpan(
+                  text: '*',
+                  style: TextStyle(color: Colors.red),
+                ),
               ],
             ),
           ),
@@ -1270,15 +1429,22 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (title == 'Bahaya Tinggi' ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB))
+                      ? (title == 'Bahaya Tinggi'
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB))
                       : const Color(0xFFFAFAFA),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? (title == 'Bahaya Tinggi' ? const Color(0xFFF87171) : const Color(0xFFFBBF24))
+                        ? (title == 'Bahaya Tinggi'
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFFFBBF24))
                         : const Color(0xFFE2E8F0),
                     width: isSelected ? 1.5 : 1.0,
                   ),
@@ -1293,7 +1459,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? (title == 'Bahaya Tinggi' ? const Color(0xFFEF4444) : const Color(0xFFEA580C))
+                              ? (title == 'Bahaya Tinggi'
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFEA580C))
                               : const Color(0xFFCBD5E1),
                           width: 2,
                         ),
@@ -1383,16 +1551,16 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     color: Color(0xFF0F172A),
                   ),
                   children: [
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
               Text(
                 '${_deskripsiController.text.length}/500 karakter',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF94A3B8),
-                ),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
               ),
             ],
           ),
@@ -1401,7 +1569,13 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             controller: _deskripsiController,
             maxLines: 4,
             maxLength: 500,
-            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => const SizedBox.shrink(),
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => const SizedBox.shrink(),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
                 return 'Deskripsi kondisi lapangan wajib diisi';
@@ -1436,7 +1610,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _submitLaporan,
+        onPressed: _isSubmitting ? null : _submitLaporan,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFEA580C),
           foregroundColor: Colors.white,
@@ -1445,20 +1619,26 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           elevation: 2,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Submit',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
+        child: _isSubmitting
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text(
+                    'Submit Laporan',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, size: 18),
+                ],
               ),
-            ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 18),
-          ],
-        ),
       ),
     );
   }
