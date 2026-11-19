@@ -4,7 +4,9 @@ import '../../../services/report_service.dart';
 import 'package:intl/intl.dart';
 
 class RiwayatPage extends StatefulWidget {
-  const RiwayatPage({super.key});
+  final String initialFilter;
+
+  const RiwayatPage({super.key, this.initialFilter = 'Semua'});
 
   @override
   State<RiwayatPage> createState() => _RiwayatPageState();
@@ -12,12 +14,13 @@ class RiwayatPage extends StatefulWidget {
 
 class _RiwayatPageState extends State<RiwayatPage> {
   final _reportService = ReportService();
-  String _selectedFilter = 'Semua';
+  late String _selectedFilter;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     _loadData();
   }
 
@@ -29,6 +32,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -103,11 +107,13 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildFilterChip('Semua (8)'),
+                      _buildFilterChip('Semua'),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Diproses (2)'),
+                      _buildFilterChip('Diproses'),
                       const SizedBox(width: 8),
-                      _buildFilterChip('Verifikasi (1)'),
+                      _buildFilterChip('Selesai'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip('Validasi'),
                     ],
                   ),
                 ),
@@ -124,15 +130,36 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     child: ValueListenableBuilder<List<ReportModel>>(
                       valueListenable: ReportService.reportsNotifier,
                       builder: (context, reports, child) {
-                        if (reports.isEmpty) {
+                        final filteredReports = reports.where((report) {
+                          if (_selectedFilter == 'Semua') return true;
+                          final status = (report.status ?? '').toLowerCase();
+                          if (_selectedFilter == 'Diproses') {
+                            return status.contains('proses') ||
+                                status.contains('tindak') ||
+                                status.contains('diterima');
+                          }
+                          if (_selectedFilter == 'Selesai') {
+                            return status.contains('selesai') ||
+                                status.contains('bast') ||
+                                status.contains('tuntas');
+                          }
+                          if (_selectedFilter == 'Validasi') {
+                            return status.contains('validasi') ||
+                                status.contains('menunggu') ||
+                                status.contains('verifikasi');
+                          }
+                          return true;
+                        }).toList();
+
+                        if (filteredReports.isEmpty) {
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            children: const [
-                              SizedBox(height: 80),
+                            children: [
+                              const SizedBox(height: 80),
                               Center(
                                 child: Text(
-                                  'Belum ada laporan yang diajukan.',
-                                  style: TextStyle(
+                                  'Tidak ada laporan dengan filter $_selectedFilter.',
+                                  style: const TextStyle(
                                     color: Colors.grey,
                                     fontSize: 14,
                                   ),
@@ -145,11 +172,11 @@ class _RiwayatPageState extends State<RiwayatPage> {
                         return ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(16),
-                          itemCount: reports.length,
+                          itemCount: filteredReports.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 16),
                           itemBuilder: (context, index) {
-                            final report = reports[index];
+                            final report = filteredReports[index];
                             return _buildReportCard(report);
                           },
                         );
@@ -188,6 +215,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
+// ignore: unused_element
   Widget _buildDummyCard1() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -361,6 +389,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
+// ignore: unused_element
   Widget _buildDummyCard2() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -525,7 +554,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Dilaporkan',
+                  report.status ?? 'Dilaporkan',
                   style: TextStyle(
                     color: Colors.blue[800],
                     fontSize: 10,
@@ -627,6 +656,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
+// ignore: unused_element
   Widget _buildDummyCard3() {
     return Container(
       padding: const EdgeInsets.all(16),

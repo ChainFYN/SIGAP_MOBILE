@@ -14,6 +14,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  String _riwayatFilter = 'Semua';
   final _reportService = ReportService();
 
   @override
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
     _reportService.fetchReports();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -42,9 +44,9 @@ class _HomePageState extends State<HomePage> {
             final horizontalPadding = mobileWidth < 340
                 ? 10.0
                 : mobileWidth < 390
-                ? 12.0
-                : 16.0;
-            final statusColumns = 2;
+                    ? 12.0
+                    : 16.0;
+            const statusColumns = 2;
 
             return Center(
               child: ConstrainedBox(
@@ -87,7 +89,7 @@ class _HomePageState extends State<HomePage> {
           },
         );
       case 2:
-        return const RiwayatPage();
+        return RiwayatPage(initialFilter: _riwayatFilter);
       case 3:
         return const Center(child: Text('Halaman Profil'));
       default:
@@ -100,7 +102,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       height: 88,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF1E3A8A),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -130,7 +132,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNavItem(int index, IconData icon, String label) {
-    bool isActive = _selectedIndex == index;
+    final isActive = _selectedIndex == index;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -179,17 +181,16 @@ class _HomePageState extends State<HomePage> {
                       icon,
                       size: 24,
                       color: isActive
-                          ? const Color(0xFF1E3A8A)
-                          : Colors.grey[400],
+                          ? const Color(0xFFBFDBFE)
+                          : Colors.white70,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: isActive
-                            ? FontWeight.bold
-                            : FontWeight.w500,
+                        fontWeight:
+                            isActive ? FontWeight.bold : FontWeight.w500,
                         color: isActive
                             ? const Color(0xFF1E3A8A)
                             : Colors.grey[500],
@@ -204,7 +205,7 @@ class _HomePageState extends State<HomePage> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: const Color(0xFF1E3A8A),
       automaticallyImplyLeading: false,
       elevation: 0,
       toolbarHeight: 70,
@@ -250,7 +251,7 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.only(right: 12.0),
           child: Row(
             children: [
-              Text(
+              const Text(
                 'Warga Test\nPelapor Aktif',
                 textAlign: TextAlign.right,
                 style: TextStyle(
@@ -428,7 +429,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildStatusHeader() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
@@ -437,26 +438,10 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1E293B),
+              color: Color(0xFF1E293B),
               letterSpacing: 0.2,
             ),
             overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFDBEAFE),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Text(
-            'Aktif',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1D4ED8),
-            ),
           ),
         ),
       ],
@@ -467,43 +452,55 @@ class _HomePageState extends State<HomePage> {
     final totalDiajukan = ReportService.totalSubmitted;
     final totalMenunggu = ReportService.totalWaiting;
 
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: crossAxisCount,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 1.0,
-      children: [
-        _buildStatusCard(
-          'Total Aduan',
-          '$totalDiajukan',
-          Icons.folder_rounded,
-          const Color(0xFFE2E8F0),
-          const Color(0xFF1E293B),
-        ),
-        _buildStatusCard(
-          'Diproses',
-          '$totalMenunggu',
-          Icons.hourglass_top_rounded,
-          const Color(0xFFDBEAFE),
-          const Color(0xFF1D4ED8),
-        ),
-        _buildStatusCard(
-          'Selesai',
-          '2',
-          Icons.check_circle_rounded,
-          const Color(0xFFD1FAE5),
-          const Color(0xFF059669),
-        ),
-        _buildStatusCard(
-          'Validasi',
-          '1',
-          Icons.verified_rounded,
-          const Color(0xFFFEF3C7),
-          const Color(0xFFD97706),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth =
+            (constraints.maxWidth - (crossAxisCount - 1) * 8) / crossAxisCount;
+        final aspectRatio = cardWidth < 180 ? 1.10 : 1.45;
+
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: aspectRatio,
+          children: [
+            _buildStatusCard(
+              'Total Aduan',
+              '$totalDiajukan',
+              Icons.folder_rounded,
+              const Color(0xFFE2E8F0),
+              const Color(0xFF1E293B),
+              'Semua',
+            ),
+            _buildStatusCard(
+              'Diproses',
+              '$totalMenunggu',
+              Icons.hourglass_top_rounded,
+              const Color(0xFFDBEAFE),
+              const Color(0xFF1D4ED8),
+              'Diproses',
+            ),
+            _buildStatusCard(
+              'Selesai',
+              '2',
+              Icons.check_circle_rounded,
+              const Color(0xFFD1FAE5),
+              const Color(0xFF059669),
+              'Selesai',
+            ),
+            _buildStatusCard(
+              'Validasi',
+              '1',
+              Icons.verified_rounded,
+              const Color(0xFFFEF3C7),
+              const Color(0xFFD97706),
+              'Validasi',
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -513,51 +510,105 @@ class _HomePageState extends State<HomePage> {
     IconData icon,
     Color bg,
     Color iconColor,
+    String filter,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 120;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _riwayatFilter = filter;
+          _selectedIndex = 2;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 120;
 
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: compact ? 18 : 20, color: iconColor),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                count,
-                style: TextStyle(
-                  fontSize: compact ? 22 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: compact ? 10.5 : 11,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          );
-        },
+            return compact
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(icon, size: 18, color: iconColor),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              count,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          icon,
+                          size: compact ? 18 : 20,
+                          color: iconColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        count,
+                        style: TextStyle(
+                          fontSize: compact ? 22 : 24,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: compact ? 10.5 : 11,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  );
+          },
+        ),
       ),
     );
   }
