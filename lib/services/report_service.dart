@@ -20,6 +20,68 @@ class ReportService {
     reportsNotifier.value = [report, ...reportsNotifier.value];
   }
 
+  /// Mengambil daftar Kecamatan
+  Future<List<Map<String, dynamic>>> getKecamatan() async {
+    try {
+      final response = await _dio.get(ApiConstants.kecamatan);
+      if (response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getKecamatan: $e');
+      return [];
+    }
+  }
+
+  /// Mengambil daftar Desa berdasarkan ID Kecamatan
+  Future<List<Map<String, dynamic>>> getDesa(int idKecamatan) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.desa,
+        queryParameters: {'id_kecamatan': idKecamatan},
+      );
+      if (response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getDesa: $e');
+      return [];
+    }
+  }
+
+  /// Mengambil daftar Ruas Jalan berdasarkan ID Desa
+  Future<List<Map<String, dynamic>>> getJalan(int idDesa) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.jalan,
+        queryParameters: {'id_desa': idDesa},
+      );
+      if (response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getJalan: $e');
+      return [];
+    }
+  }
+
+  /// Mengambil daftar Kategori Kerusakan Jalan
+  Future<List<Map<String, dynamic>>> getKategori() async {
+    try {
+      final response = await _dio.get(ApiConstants.kategori);
+      if (response.data['success'] == true) {
+        return List<Map<String, dynamic>>.from(response.data['data']);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error getKategori: $e');
+      return [];
+    }
+  }
+
   /// Mengambil daftar laporan asli dari Laravel (GET /api/laporan)
   Future<List<ReportModel>> fetchReports() async {
     try {
