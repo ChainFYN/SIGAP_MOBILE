@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_input.dart';
 import 'home_page.dart';
-import 'camat_page.dart';
 import 'register_page.dart';
+import 'pupr_dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,9 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   // Akun sementara untuk demo, sebelum ada backend
   static const Map<String, Map<String, String>> _akunDemo = {
     'warga@sigap.id': {'password': 'warga123', 'role': 'warga'},
-    'camat@sigap.id': {'password': 'camat123', 'role': 'camat'},
+    'pupr@sigap.id': {'password': 'pupr123', 'role': 'pupr'},
   };
-
 
   // Mengubah fungsi _login menggunakan pushAndRemoveUntil
   void _login() {
@@ -58,9 +57,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
-    // Pilih halaman tujuan berdasarkan role
-    final Widget tujuan =
-        akun['role'] == 'camat' ? const CamatPage() : const HomePage();
+    // Pilih halaman tujuan berdasarkan role (PUPR atau Warga)
+    final Widget tujuan = akun['role'] == 'pupr'
+        ? const PuprDashboardPage()
+        : const HomePage();
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -239,6 +239,41 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                           ),
+                        ),
+
+                        const SizedBox(height: 16),
+                        const Center(
+                          child: Text(
+                            'Demo Akun Cepat:',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ActionChip(
+                              label: const Text('Warga', style: TextStyle(fontSize: 11)),
+                              onPressed: () {
+                                setState(() {
+                                  emailController.text = 'warga@sigap.id';
+                                  passwordController.text = 'warga123';
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            ActionChip(
+                              avatar: const Icon(Icons.engineering, size: 14, color: Color(0xFFD97706)),
+                              backgroundColor: const Color(0xFFFEF3C7),
+                              label: const Text('PUPR Lapangan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                              onPressed: () {
+                                setState(() {
+                                  emailController.text = 'pupr@sigap.id';
+                                  passwordController.text = 'pupr123';
+                                });
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
