@@ -1,6 +1,6 @@
 class ApiConstants {
   // IP Wi-Fi laptop Fedora Anda saat ini
-  static const String baseUrl = 'http://10.10.16.171:8000/api';
+  static const String baseUrl = 'http://192.168.18.236:8000/api';
 
   // Endpoint Auth
   static const String login = '$baseUrl/login';

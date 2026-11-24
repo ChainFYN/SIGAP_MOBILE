@@ -44,8 +44,8 @@ class _HomePageState extends State<HomePage> {
             final horizontalPadding = mobileWidth < 340
                 ? 10.0
                 : mobileWidth < 390
-                    ? 12.0
-                    : 16.0;
+                ? 12.0
+                : 16.0;
             const statusColumns = 2;
 
             return Center(
@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> {
   // === Bagian Navigasi Bawah ===
   Widget _buildBottomNavigationBar() {
     return Container(
-      height: 88,
+      height: 78,
       decoration: BoxDecoration(
         color: const Color(0xFF1E3A8A),
         boxShadow: [
@@ -112,15 +112,14 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       child: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Expanded(child: _buildNavItem(0, Icons.home_rounded, 'Beranda')),
-              Expanded(
-                child: _buildNavItem(1, Icons.add_rounded, 'Buat Lapor'),
-              ),
+              Expanded(child: _buildNavItem(1, Icons.add_rounded, 'Unggah')),
               Expanded(
                 child: _buildNavItem(2, Icons.history_rounded, 'Riwayat'),
               ),
@@ -156,24 +155,39 @@ class _HomePageState extends State<HomePage> {
       child: Center(
         child: index == 1
             ? Container(
-                width: 60,
-                height: 60,
-                margin: const EdgeInsets.only(top: 6),
+                height: 58,
+                constraints: const BoxConstraints(minWidth: 88),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A8A),
-                  shape: BoxShape.circle,
-                  boxShadow: [
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF60A5FA), width: 1),
+                  boxShadow: const [
                     BoxShadow(
-                      color: const Color(0xFF1E3A8A).withValues(alpha: 0.35),
+                      color: Color(0x4D60A5FA),
                       blurRadius: 10,
-                      offset: const Offset(0, 6),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Icon(icon, size: 30, color: Colors.white),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 23, color: Colors.white),
+                    const SizedBox(height: 3),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               )
             : SizedBox(
-                height: 52,
+                height: 58,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -189,11 +203,12 @@ class _HomePageState extends State<HomePage> {
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight:
-                            isActive ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: isActive
-                            ? const Color(0xFF1E3A8A)
-                            : Colors.grey[500],
+                            ? const Color(0xFFBFDBFE)
+                            : Colors.white70,
                       ),
                     ),
                   ],
