@@ -240,41 +240,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 16),
-                        const Center(
-                          child: Text(
-                            'Demo Akun Cepat:',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ActionChip(
-                              label: const Text('Warga', style: TextStyle(fontSize: 11)),
-                              onPressed: () {
-                                setState(() {
-                                  emailController.text = 'warga@sigap.id';
-                                  passwordController.text = 'warga123';
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            ActionChip(
-                              avatar: const Icon(Icons.engineering, size: 14, color: Color(0xFFD97706)),
-                              backgroundColor: const Color(0xFFFEF3C7),
-                              label: const Text('PUPR Lapangan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
-                              onPressed: () {
-                                setState(() {
-                                  emailController.text = 'pupr@sigap.id';
-                                  passwordController.text = 'pupr123';
-                                });
-                              },
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),

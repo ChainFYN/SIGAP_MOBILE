@@ -33,6 +33,3 @@ android {
 kotlin {
     jvmToolchain(17)
 }
-
-
-org.gradle.java.installations.paths=C:/Program Files/Eclipse Adoptium/jdk-17.0.20.101-hotspot

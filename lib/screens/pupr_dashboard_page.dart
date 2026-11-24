@@ -15,6 +15,8 @@ class PuprDashboardPage extends StatefulWidget {
 class _PuprDashboardPageState extends State<PuprDashboardPage> {
   int _selectedTabIndex = 0; // 0: Dikerjakan, 1: Disposisi, 2: Selesai
   int _bottomNavIndex = 0; // 0: Tugas Aktif, 1: Riwayat
+  String _selectedFilterPeriode = 'Semua';
+  final List<String> _filterPeriodeOptions = ['Semua', 'Hari Ini', 'Pekan Ini', 'Bulan Ini'];
 
   void _openGoogleMaps(PuprTaskModel task) {
     final distanceMeters = PuprService.getDistanceToTask(task);
@@ -254,6 +256,28 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Baris Header & Filter di Pojok Kanan Atas Isi Halaman
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Ringkasan Informasi',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        _buildFilterDropdown(),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Statistik KPI (3 Kartu Ringkas)
+                    _buildKpiSection(),
+                    const SizedBox(height: 16),
+
                     // Segmented Tabs: [ Dikerjakan ] [ Disposisi ] [ Selesai ]
                     _buildSegmentedTabs(),
                     const SizedBox(height: 16),
@@ -280,12 +304,26 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
   // === TOP HEADER & BANNER PUPR ===
   Widget _buildTopHeader() {
     return Container(
-      color: const Color(0xFF0A1D37),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0C146A),
+            Color(0xFF101B93),
+            Color(0xFF1523BC),
+          ],
+        ),
+      ),
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
         left: 16,
         right: 16,
-        bottom: 20,
+        bottom: 22,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,17 +335,28 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
               // Logo SIGAP PUPR
               Row(
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.hardware,
-                      color: Color(0xFF0A1D37),
-                      size: 22,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/images/logo_sigap.png',
+                      width: 38,
+                      height: 38,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.hardware,
+                            color: Color(0xFF0A1D37),
+                            size: 22,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -415,16 +464,6 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    PuprService.roleLabel,
-                    style: TextStyle(
-                      color: Color(0xFFF59E0B),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
                     PuprService.namaTim,
                     style: TextStyle(
                       fontSize: 22,
@@ -437,7 +476,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                     children: const [
                       Icon(
                         Icons.location_on_outlined,
-                        color: Color(0xFFFBBF24),
+                        color: Colors.white,
                         size: 15,
                       ),
                       SizedBox(width: 4),
@@ -456,50 +495,83 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
             ],
           ),
 
-          const SizedBox(height: 18),
+        ],
+      ),
+    );
+  }
 
-          // Statistik KPI (3 Kartu Ringkas)
-          Row(
-            children: [
-              Expanded(
-                child: _buildKpiCard(
-                  title: 'DIKERJAKAN',
-                  value: '${PuprService.countDikerjakan}',
-                  subtitle: 'Tugas Aktif',
-                  titleColor: const Color(0xFF1E40AF),
-                  valueColor: const Color(0xFF0F172A),
-                  bgColor: Colors.white,
-                  borderColor: const Color(0xFFE2E8F0),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildKpiCard(
-                  title: 'DISPOSISI',
-                  value: '${PuprService.countDisposisi}',
-                  subtitle: 'Tugas Baru',
-                  titleColor: const Color(0xFFB45309),
-                  valueColor: const Color(0xFFD97706),
-                  bgColor: const Color(0xFFFEFCE8),
-                  borderColor: const Color(0xFFFEF08A),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildKpiCard(
-                  title: 'PEKAN INI',
-                  value: '${PuprService.countPekanIni}',
-                  subtitle: 'Selesai',
-                  titleColor: const Color(0xFF15803D),
-                  valueColor: const Color(0xFF16A34A),
-                  bgColor: const Color(0xFFF0FDF4),
-                  borderColor: const Color(0xFFBBF7D0),
-                ),
-              ),
-            ],
+  // === FILTER PERIODE (DROPDOWN) ===
+  Widget _buildFilterDropdown() {
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedFilterPeriode,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+          items: _filterPeriodeOptions.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _selectedFilterPeriode = newValue;
+              });
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  // === STATISTIK KPI (3 KARTU RINGKAS) ===
+  Widget _buildKpiSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildKpiCard(
+            title: 'DIKERJAKAN',
+            value: '${PuprService.countDikerjakan}',
+            subtitle: 'Tugas Aktif',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildKpiCard(
+            title: 'DISPOSISI',
+            value: '${PuprService.countDisposisi}',
+            subtitle: 'Tugas Baru',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildKpiCard(
+            title: 'PEKAN INI',
+            value: '${PuprService.countPekanIni}',
+            subtitle: 'Selesai',
+          ),
+        ),
+      ],
     );
   }
 
@@ -507,17 +579,13 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
     required String title,
     required String value,
     required String subtitle,
-    required Color titleColor,
-    required Color valueColor,
-    required Color bgColor,
-    required Color borderColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -527,30 +595,33 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
-            style: TextStyle(
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: titleColor,
+              color: Color(0xFF64748B),
               letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: valueColor,
+              color: Color(0xFF0F172A),
               height: 1.1,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 11,
               color: Color(0xFF64748B),
@@ -1126,9 +1197,14 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
     return Container(
       height: 68,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE2E8F0)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF1523BC),
+            Color(0xFF101B93),
+            Color(0xFF0C146A),
+          ],
         ),
       ),
       child: Row(
@@ -1159,7 +1235,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
           children: [
             Icon(
               isActive ? filledIcon : outlineIcon,
-              color: isActive ? const Color(0xFF0A1D37) : const Color(0xFF94A3B8),
+              color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
               size: 22,
             ),
             const SizedBox(height: 4),
@@ -1168,7 +1244,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? const Color(0xFF0A1D37) : const Color(0xFF94A3B8),
+                color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
               ),
             ),
           ],
