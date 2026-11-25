@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../warga/home/home_page.dart';
 import '../otp/otp_verification_page.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/report_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,6 +14,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
+  final _reportService = ReportService();
 
   final _nikController = TextEditingController();
   final _namaController = TextEditingController();
@@ -21,77 +26,101 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String? _selectedKecamatan;
-  String? _selectedDesa;
+  bool _isLoading = false;
+  bool _isLoadingDesa = false;
 
-  static const List<String> _kecamatanList = [
-    'Ajung',
-    'Ambulu',
-    'Arjasa',
-    'Balung',
-    'Bangsalsari',
-    'Banyuwangi',
-    'Batu Uban',
-    'Jelbuk',
-    'Jenggawah',
-    'Jombang',
-    'Kalisat',
-    'Kaliwates',
-    'Kencong',
-    'Ledokombo',
-    'Mayang',
-    'Mumbulsari',
-    'Pakusari',
-    'Panti',
-    'Patrang',
-    'Puger',
-    'Rambipuji',
-    'Semboro',
-    'Sukorambi',
-    'Sukowono',
-    'Sumberbaru',
-    'Sumberjambe',
-    'Sumber Sari',
-    'Tanggul',
-    'Tempurejo',
-    'Umbulsari',
-    'Wuluhan',
-  ];
+  // Master data
+  List<Map<String, dynamic>> _kecamatanList = [];
+  List<Map<String, dynamic>> _desaList = [];
 
-  static const List<String> _desaList = [
-    'Jember Kidul',
-    'Jember Lor',
-    'Jember Wetan',
-    'Mangli',
-    'Sempusari',
-    'Kepatihan',
-    'Tegal Besar',
-    'Patrang',
-  ];
+  int? _selectedIdKecamatan;
+  int? _selectedIdDesa;
 
   @override
-  void dispose() {
-    _nikController.dispose();
-    _namaController.dispose();
-    _emailController.dispose();
-    _whatsappController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadKecamatan();
   }
 
-  void _submit() {
+  Future<void> _loadKecamatan() async {
+    final data = await _reportService.getKecamatan();
+    if (mounted) {
+      setState(() => _kecamatanList = data);
+    }
+  }
+
+  Future<void> _onKecamatanChanged(int? idKecamatan) async {
+    if (idKecamatan == null) return;
+    setState(() {
+      _selectedIdKecamatan = idKecamatan;
+      _selectedIdDesa = null;
+      _desaList = [];
+      _isLoadingDesa = true;
+    });
+
+    final data = await _reportService.getDesa(idKecamatan);
+    if (mounted) {
+      setState(() {
+        _desaList = data;
+        _isLoadingDesa = false;
+      });
+    }
+  }
+
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationPage(
-          phone: _whatsappController.text.trim(),
-          nama: _namaController.text.trim(),
+    if (_selectedIdDesa == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih Desa domisili Anda'),
+          backgroundColor: Colors.red,
         ),
-      ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // Format nomor WhatsApp: jika user mengisi tanpa 0 (misal: 812...), tambahkan 0 di depan
+    String rawPhone = _whatsappController.text.trim();
+    String phoneFormatted = rawPhone.startsWith('0') ? rawPhone : '0$rawPhone';
+
+    final result = await _authService.register(
+      nik: _nikController.text.trim(),
+      namaLengkap: _namaController.text.trim(),
+      email: _emailController.text.trim().toLowerCase(),
+      telepon: phoneFormatted,
+      password: _passwordController.text,
+      passwordConfirmation: _confirmPasswordController.text,
+      idDesa: _selectedIdDesa!,
     );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Registrasi berhasil!'),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
+
+      // Langsung arahkan ke halaman utama Warga
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Registrasi gagal'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -256,17 +285,69 @@ class _RegisterPageState extends State<RegisterPage> {
                 hint: 'Pilih Kecamatan',
                 value: _selectedKecamatan,
                 items: _kecamatanList,
-                onChanged: (value) =>
-                    setState(() => _selectedKecamatan = value),
+                onChanged: (value) => setState(() => _selectedKecamatan = value),
               ),
-              right: _buildDropdownItem(
-                label: 'Kelurahan / Desa',
-                hint: 'Pilih Kelurahan/Desa',
-                value: _selectedDesa,
-                items: _desaList,
-                onChanged: (value) => setState(() => _selectedDesa = value),
+              right: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Kelurahan / Desa *',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (_isLoadingDesa) ...[
+                        const SizedBox(width: 6),
+                        const SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<int>(
+                    initialValue: _selectedIdDesa,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    hint: Text(
+                      _selectedIdKecamatan == null
+                          ? 'Pilih Kec dulu'
+                          : 'Pilih Desa',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    items: _desaList.map((d) {
+                      return DropdownMenuItem<int>(
+                        value: d['id_desa'] as int,
+                        child: Text(
+                          d['nama_desa'].toString(),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: _selectedIdKecamatan == null
+                        ? null
+                        : (v) => setState(() => _selectedIdDesa = v),
+                    validator: (v) => v == null ? 'Wajib dipilih' : null,
+                  ),
+                ],
               ),
             ),
+
             const SizedBox(height: 14),
             _buildResponsiveRow(
               left: _buildPasswordItem(
@@ -293,9 +374,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
                 validator: (v) {
-                  if ((v ?? '').isEmpty) {
-                    return 'Konfirmasi kata sandi wajib diisi';
-                  }
+                  if ((v ?? '').isEmpty) return 'Konfirmasi kata sandi wajib diisi';
                   if (v != _passwordController.text) {
                     return 'Kata sandi tidak sama';
                   }
