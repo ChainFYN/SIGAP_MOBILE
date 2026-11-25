@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../warga/home/home_page.dart';
-import '../../camat/dashboard/camat_page.dart';
+import '../../../screens/pupr_dashboard_page.dart';
 import '../register/register_page.dart';
 import '../../../services/auth_service.dart';
 
@@ -63,8 +63,8 @@ class _LoginPageState extends State<LoginPage> {
           .toString()
           .toLowerCase();
 
-      final Widget tujuan = (roleName == 'kecamatan')
-          ? const CamatPage()
+      final Widget tujuan = (roleName == 'pupr' || roleName == 'mandor')
+          ? const PuprDashboardPage()
           : const HomePage();
 
       Navigator.pushAndRemoveUntil(
