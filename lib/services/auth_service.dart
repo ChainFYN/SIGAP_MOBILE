@@ -62,6 +62,76 @@ class AuthService {
     }
   }
 
+  /// Melakukan registrasi warga baru ke backend Laravel
+  Future<Map<String, dynamic>> register({
+    required String nik,
+    required String namaLengkap,
+    required String email,
+    required String telepon,
+    required String password,
+    required String passwordConfirmation,
+    required int idDesa,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.register,
+        data: {
+          'nik': nik,
+          'nama_lengkap': namaLengkap,
+          'email': email,
+          'telepon': telepon,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+          'id_desa': idDesa,
+        },
+      );
+
+      final data = response.data;
+      if (data['success'] == true && data['token'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+
+        // Simpan token & profil pengguna
+        await prefs.setString('auth_token', data['token']);
+        if (data['data'] != null) {
+          await prefs.setString('user_profile', jsonEncode(data['data']));
+        }
+
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Registrasi berhasil',
+          'token': data['token'],
+          'data': data['data'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Registrasi gagal',
+      };
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String errorMessage = 'Gagal terhubung ke server';
+
+      if (responseData is Map) {
+        if (responseData['message'] != null) {
+          errorMessage = responseData['message'];
+        }
+        // Ambil pesan error validasi spesifik Laravel jika ada
+        if (responseData['errors'] is Map) {
+          final errors = responseData['errors'] as Map<String, dynamic>;
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            errorMessage = firstError.first.toString();
+          }
+        }
+      }
+
+      return {'success': false, 'message': errorMessage};
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan: $e'};
+    }
+  }
+
   /// Logout dari server dan hapus sesi lokal
   Future<void> logout() async {
     try {
