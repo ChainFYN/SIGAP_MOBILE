@@ -31,5 +31,11 @@ android {
 
 // Menyetel target Kotlin ke Java 17 menggunakan Toolchain (paling aman untuk AGP 9.0+)
 kotlin {
-    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+flutter {
+    source = "../.."
 }
