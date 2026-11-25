@@ -124,8 +124,8 @@ class ReportService {
         'id_kategori': idKategori,
         'tingkat_bahaya': tingkatBahaya,
         'deskripsi': deskripsi,
-        if (latitude != null) 'latitude': latitude,
-        if (longitude != null) 'longitude': longitude,
+        'latitude': latitude,
+        'longitude': longitude,
         'foto': await MultipartFile.fromFile(
           imageFile.path,
           filename: fileName,

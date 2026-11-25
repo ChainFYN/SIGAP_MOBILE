@@ -153,11 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
               Positioned(
                 right: 17,
                 top: 16,
-                child: Icon(
-                  Icons.add,
-                  color: Color(0xFF22C55E),
-                  size: 20,
-                ),
+                child: Icon(Icons.add, color: Color(0xFF22C55E), size: 20),
               ),
             ],
           ),
@@ -260,7 +256,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 hint: 'Pilih Kecamatan',
                 value: _selectedKecamatan,
                 items: _kecamatanList,
-                onChanged: (value) => setState(() => _selectedKecamatan = value),
+                onChanged: (value) =>
+                    setState(() => _selectedKecamatan = value),
               ),
               right: _buildDropdownItem(
                 label: 'Kelurahan / Desa',
@@ -296,7 +293,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
                 validator: (v) {
-                  if ((v ?? '').isEmpty) return 'Konfirmasi kata sandi wajib diisi';
+                  if ((v ?? '').isEmpty) {
+                    return 'Konfirmasi kata sandi wajib diisi';
+                  }
                   if (v != _passwordController.text) {
                     return 'Kata sandi tidak sama';
                   }
@@ -331,11 +330,7 @@ class _RegisterPageState extends State<RegisterPage> {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.person_add_alt_1,
-              color: Color(0xFF22C55E),
-              size: 20,
-            ),
+            Icon(Icons.person_add_alt_1, color: Color(0xFF22C55E), size: 20),
             SizedBox(width: 8),
             Text(
               'Daftarkan Akun Pelapor Warga',
@@ -379,13 +374,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 430) {
-          return Column(
-            children: [
-              left,
-              const SizedBox(height: 14),
-              right,
-            ],
-          );
+          return Column(children: [left, const SizedBox(height: 14), right]);
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +475,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _buildLabel(label),
         const SizedBox(height: 7),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           validator: (v) => v == null ? 'Wajib dipilih' : null,
           decoration: _inputDecoration(hint),

@@ -1,5 +1,5 @@
 class ApiConstants {
-  // IP Wi-Fi laptop Fedora Anda saat ini
+  // Endpoint API melalui Ngrok
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
     defaultValue: 'https://unbraided-greeter-giddy.ngrok-free.dev/api',

@@ -425,7 +425,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E3A8A).withOpacity(0.4),
+                          color: const Color(0xFF1E3A8A).withValues(alpha: 0.4),
                           shape: BoxShape.circle,
                           border: Border.all(color: const Color(0xFF334155)),
                         ),
@@ -456,7 +456,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E3A8A).withOpacity(0.4),
+                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.4),
                         shape: BoxShape.circle,
                         border: Border.all(color: const Color(0xFF334155)),
                       ),
@@ -486,7 +486,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                   height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.04),
+                    color: Colors.white.withValues(alpha: 0.04),
                   ),
                 ),
               ),
@@ -540,7 +540,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
         border: Border.all(color: const Color(0xFFCBD5E1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -618,7 +618,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -668,7 +668,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0).withOpacity(0.6),
+        color: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -699,7 +699,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -840,7 +840,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1310,7 +1310,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
           children: [
             Icon(
               isActive ? filledIcon : outlineIcon,
-              color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.6),
               size: 22,
             ),
             const SizedBox(height: 4),
@@ -1319,7 +1319,7 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
+                color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.6),
               ),
             ),
           ],

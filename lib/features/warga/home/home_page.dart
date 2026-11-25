@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildAppBar(),
+      appBar: _selectedIndex == 2 ? null : _buildAppBar(),
       body: _getBody(),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -89,7 +89,10 @@ class _HomePageState extends State<HomePage> {
           },
         );
       case 2:
-        return RiwayatPage(initialFilter: _riwayatFilter);
+        return RiwayatPage(
+          initialFilter: _riwayatFilter,
+          onProfileTap: _showAccountPopup,
+        );
       case 3:
         return const Center(child: Text('Halaman Profil'));
       default:
@@ -100,28 +103,44 @@ class _HomePageState extends State<HomePage> {
   // === Bagian Navigasi Bawah ===
   Widget _buildBottomNavigationBar() {
     return Container(
-      height: 78,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E3A8A),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
+      height: 68,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1523BC), Color(0xFF101B93), Color(0xFF0C146A)],
+        ),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(child: _buildNavItem(0, Icons.home_rounded, 'Beranda')),
-              Expanded(child: _buildNavItem(1, Icons.add_rounded, 'Unggah')),
               Expanded(
-                child: _buildNavItem(2, Icons.history_rounded, 'Riwayat'),
+                child: _buildNavItem(
+                  0,
+                  Icons.home_outlined,
+                  Icons.home_rounded,
+                  'Beranda',
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  1,
+                  Icons.add_circle_outline,
+                  Icons.add_circle,
+                  'Unggah',
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  2,
+                  Icons.history_outlined,
+                  Icons.history_rounded,
+                  'Riwayat',
+                ),
               ),
             ],
           ),
@@ -130,20 +149,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData outlineIcon,
+    IconData filledIcon,
+    String label,
+  ) {
     final isActive = _selectedIndex == index;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () async {
         if (index == 1) {
-          await Navigator.push(
+          final result = await Navigator.push<String>(
             context,
             MaterialPageRoute(builder: (context) => const FormLaporanPage()),
           );
           if (mounted) {
             setState(() {
-              _selectedIndex = 0;
+              _selectedIndex = result == 'riwayat' ? 2 : 0;
             });
           }
           return;
@@ -152,79 +176,57 @@ class _HomePageState extends State<HomePage> {
           _selectedIndex = index;
         });
       },
-      child: Center(
-        child: index == 1
-            ? Container(
-                height: 58,
-                constraints: const BoxConstraints(minWidth: 88),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF60A5FA), width: 1),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x4D60A5FA),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 23, color: Colors.white),
-                    const SizedBox(height: 3),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : SizedBox(
-                height: 58,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 24,
-                      color: isActive
-                          ? const Color(0xFFBFDBFE)
-                          : Colors.white70,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isActive
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isActive
-                            ? const Color(0xFFBFDBFE)
-                            : Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
+      child: SizedBox(
+        height: 58,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isActive ? filledIcon : outlineIcon,
+              size: 23,
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.6),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF1E3A8A),
+      backgroundColor: const Color(0xFF101B93),
       automaticallyImplyLeading: false,
       elevation: 0,
       toolbarHeight: 70,
       titleSpacing: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      flexibleSpace: const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0C146A), Color(0xFF101B93), Color(0xFF1523BC)],
+          ),
+        ),
+      ),
       title: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 360;

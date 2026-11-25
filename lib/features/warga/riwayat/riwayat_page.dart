@@ -5,8 +5,13 @@ import 'package:intl/intl.dart';
 
 class RiwayatPage extends StatefulWidget {
   final String initialFilter;
+  final VoidCallback? onProfileTap;
 
-  const RiwayatPage({super.key, this.initialFilter = 'Semua'});
+  const RiwayatPage({
+    super.key,
+    this.initialFilter = 'Semua',
+    this.onProfileTap,
+  });
 
   @override
   State<RiwayatPage> createState() => _RiwayatPageState();
@@ -39,46 +44,66 @@ class _RiwayatPageState extends State<RiwayatPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SafeArea(
+            top: true,
+            bottom: false,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF101B93), Color(0xFF1523BC)],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riwayat Laporan',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Laporan terdaftar atas nama Afan',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFBFDBFE),
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: widget.onProfileTap,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Riwayat Laporan',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Laporan terdaftar atas nama Afan',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.history, color: Colors.blue[800]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
                 // Search bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -96,7 +121,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   child: const TextField(
                     decoration: InputDecoration(
                       icon: Icon(Icons.search, color: Colors.grey),
-                      hintText: 'Cari tiket #LP-...',
+                      hintText: 'Cari tiket LP-...',
                       border: InputBorder.none,
                     ),
                   ),
@@ -215,7 +240,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-// ignore: unused_element
+  // ignore: unused_element
   Widget _buildDummyCard1() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -237,7 +262,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '#LP-2026-0842 • 24 SEP 2026',
+                'LP-2026-0842 • 24 SEP 2026',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               Container(
@@ -389,7 +414,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-// ignore: unused_element
+  // ignore: unused_element
   Widget _buildDummyCard2() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -411,7 +436,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '#LP-2026-0899 • HARI INI, 07:15 WIB',
+                'LP-2026-0899 • HARI INI, 07:15 WIB',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               Container(
@@ -544,7 +569,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '#${report.id} • ${dateFormat.format(report.createdAt)}',
+                '${report.id} • ${dateFormat.format(report.createdAt)}',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               Container(
@@ -656,7 +681,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-// ignore: unused_element
+  // ignore: unused_element
   Widget _buildDummyCard3() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -678,7 +703,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '#LP-2026-0791 • 15 SEP 2026',
+                'LP-2026-0791 • 15 SEP 2026',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               Container(

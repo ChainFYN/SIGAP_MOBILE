@@ -5,10 +5,7 @@ import '../services/pupr_service.dart';
 class PuprFormProgresPage extends StatefulWidget {
   final PuprTaskModel task;
 
-  const PuprFormProgresPage({
-    super.key,
-    required this.task,
-  });
+  const PuprFormProgresPage({super.key, required this.task});
 
   @override
   State<PuprFormProgresPage> createState() => _PuprFormProgresPageState();
@@ -51,7 +48,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
     _selectedTahapNama = widget.task.tahapAktif;
 
     _catatanController = TextEditingController(text: widget.task.catatanTeknis);
-    _volumeController = TextEditingController(text: widget.task.volumeKerusakan);
+    _volumeController = TextEditingController(
+      text: widget.task.volumeKerusakan,
+    );
     _selectedMetode = widget.task.metodePenanganan;
 
     _aspalController = TextEditingController(
@@ -89,10 +88,15 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: const [
-              Icon(Icons.assignment_turned_in_rounded, color: Color(0xFFEA580C)),
+              Icon(
+                Icons.assignment_turned_in_rounded,
+                color: Color(0xFFEA580C),
+              ),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -104,7 +108,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           ),
           content: const Text(
             'Memilih Tahap 4 (100%) menandakan bahwa seluruh pengerjaan fisik di lapangan telah tuntas sempurna dan siap diajukan untuk penerbitan BAST (Berita Acara Serah Terima) oleh PPK / Pengawas Dinas PUPR.\n\nApakah Anda yakin fisik pengerjaan telah selesai 100%?',
-            style: TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF334155)),
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: Color(0xFF334155),
+            ),
           ),
           actions: [
             TextButton(
@@ -142,7 +150,8 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
   void _ambilFotoKamera() {
     // Simulasi pengambilan gambar kamera lapangan dengan kompresi otomatis
     setState(() {
-      _fotoProgresPath = 'foto_progres_lapangan_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      _fotoProgresPath =
+          'foto_progres_lapangan_${DateTime.now().millisecondsSinceEpoch}.jpg';
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -205,7 +214,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
               Expanded(
-                child: Text('Progres fisik lapangan berhasil dipublikasikan ke REST API!'),
+                child: Text(
+                  'Progres fisik lapangan berhasil dipublikasikan ke REST API!',
+                ),
               ),
             ],
           ),
@@ -256,7 +267,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Draf berhasil disimpan di memori lokal perangkat (Offline Cache).'),
+          content: Text(
+            'Draf berhasil disimpan di memori lokal perangkat (Offline Cache).',
+          ),
           backgroundColor: Color(0xFF0A1D37),
         ),
       );
@@ -271,7 +284,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF0F172A),
+            size: 18,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -285,7 +302,10 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B)),
+            icon: const Icon(
+              Icons.info_outline_rounded,
+              color: Color(0xFF64748B),
+            ),
             onPressed: () {},
           ),
         ],
@@ -357,7 +377,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: const [
-                Icon(Icons.engineering_rounded, size: 14, color: Color(0xFFD97706)),
+                Icon(
+                  Icons.engineering_rounded,
+                  size: 14,
+                  color: Color(0xFFD97706),
+                ),
                 SizedBox(width: 5),
                 Text(
                   'SEDANG DIKERJAKAN PUPR',
@@ -384,7 +408,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+              const Icon(
+                Icons.location_on_outlined,
+                size: 14,
+                color: Color(0xFF64748B),
+              ),
               const SizedBox(width: 4),
               Text(
                 '${widget.task.kecamatan}, ${widget.task.kabupaten}',
@@ -395,7 +423,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+              const Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: Color(0xFF64748B),
+              ),
               const SizedBox(width: 4),
               Text(
                 'Update Terakhir: ${widget.task.updateTerakhir}',
@@ -430,7 +462,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           // Section Title
           Row(
             children: const [
-              Icon(Icons.assignment_turned_in_outlined, size: 18, color: Color(0xFF2563EB)),
+              Icon(
+                Icons.assignment_turned_in_outlined,
+                size: 18,
+                color: Color(0xFF2563EB),
+              ),
               SizedBox(width: 8),
               Text(
                 'Form Update Log Progres Lapangan',
@@ -463,7 +499,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             judul: 'Tahap 1: Pengecekan Lokasi (25%)',
             status: _selectedTahapKe > 1
                 ? TahapStatus.selesai
-                : (_selectedTahapKe == 1 ? TahapStatus.aktif : TahapStatus.terkunci),
+                : (_selectedTahapKe == 1
+                      ? TahapStatus.aktif
+                      : TahapStatus.terkunci),
           ),
           const SizedBox(height: 8),
           _buildStepItem(
@@ -472,7 +510,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             judul: 'Tahap 2: Persiapan Material & Alat (50%)',
             status: _selectedTahapKe > 2
                 ? TahapStatus.selesai
-                : (_selectedTahapKe == 2 ? TahapStatus.aktif : TahapStatus.terkunci),
+                : (_selectedTahapKe == 2
+                      ? TahapStatus.aktif
+                      : TahapStatus.terkunci),
           ),
           const SizedBox(height: 8),
           _buildStepItem(
@@ -481,14 +521,18 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             judul: 'Tahap 3: Pengerjaan Fisik / Eksekusi (75%)',
             status: _selectedTahapKe > 3
                 ? TahapStatus.selesai
-                : (_selectedTahapKe == 3 ? TahapStatus.aktif : TahapStatus.terkunci),
+                : (_selectedTahapKe == 3
+                      ? TahapStatus.aktif
+                      : TahapStatus.terkunci),
           ),
           const SizedBox(height: 8),
           _buildStepItem(
             tahap: 4,
             persen: 100,
             judul: 'Tahap 4: Selesai & Publikasi Progres (100%)',
-            status: _selectedTahapKe == 4 ? TahapStatus.aktif : TahapStatus.terkunci,
+            status: _selectedTahapKe == 4
+                ? TahapStatus.aktif
+                : TahapStatus.terkunci,
           ),
 
           const SizedBox(height: 16),
@@ -509,8 +553,12 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             maxLines: 3,
             style: const TextStyle(fontSize: 12),
             decoration: InputDecoration(
-              hintText: 'Ketik detail pengerjaan, kendala cuaca, atau informasi material yang digunakan di sini...',
-              hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              hintText:
+                  'Ketik detail pengerjaan, kendala cuaca, atau informasi material yang digunakan di sini...',
+              hintStyle: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
+              ),
               contentPadding: const EdgeInsets.all(12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -522,7 +570,10 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFF0A1D37), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0A1D37),
+                  width: 1.5,
+                ),
               ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
@@ -548,7 +599,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
       case TahapStatus.selesai:
         bgColor = const Color(0xFFF0FDF4);
         borderColor = const Color(0xFFBBF7D0);
-        icon = const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18);
+        icon = const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF16A34A),
+          size: 18,
+        );
         badge = Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -557,7 +612,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           ),
           child: const Text(
             'Selesai',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF16A34A),
+            ),
           ),
         );
         break;
@@ -565,7 +624,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
       case TahapStatus.aktif:
         bgColor = Colors.white;
         borderColor = const Color(0xFF0A1D37);
-        icon = const Icon(Icons.radio_button_checked_rounded, color: Color(0xFF0A1D37), size: 18);
+        icon = const Icon(
+          Icons.radio_button_checked_rounded,
+          color: Color(0xFF0A1D37),
+          size: 18,
+        );
         badge = Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -574,7 +637,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           ),
           child: const Text(
             'Aktif',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFD97706),
+            ),
           ),
         );
         break;
@@ -582,7 +649,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
       case TahapStatus.terkunci:
         bgColor = const Color(0xFFF8FAFC);
         borderColor = const Color(0xFFE2E8F0);
-        icon = const Icon(Icons.radio_button_off_rounded, color: Color(0xFF94A3B8), size: 18);
+        icon = const Icon(
+          Icons.radio_button_off_rounded,
+          color: Color(0xFF94A3B8),
+          size: 18,
+        );
         badge = Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -591,7 +662,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           ),
           child: const Text(
             'Terkunci',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF94A3B8),
+            ),
           ),
         );
         break;
@@ -619,7 +694,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                 judul,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: status == TahapStatus.aktif ? FontWeight.bold : FontWeight.w600,
+                  fontWeight: status == TahapStatus.aktif
+                      ? FontWeight.bold
+                      : FontWeight.w600,
                   color: status == TahapStatus.terkunci
                       ? const Color(0xFF94A3B8)
                       : const Color(0xFF0F172A),
@@ -672,15 +749,22 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           // Metode Penanganan Dropdown
           const Text(
             'Metode Penanganan',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF334155),
+            ),
           ),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _selectedMetode,
+            initialValue: _selectedMetode,
             isExpanded: true,
             style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -705,14 +789,21 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           // Volume Kerusakan & Dimensi
           const Text(
             'Volume Kerusakan & Dimensi',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF334155),
+            ),
           ),
           const SizedBox(height: 6),
           TextFormField(
             controller: _volumeController,
             style: const TextStyle(fontSize: 12),
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -839,7 +930,10 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                     children: [
                       const Text(
                         'Estimasi Pagu Anggaran',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -853,7 +947,10 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                       const SizedBox(height: 2),
                       const Text(
                         'Tercatat di SPK/DPA PUPR',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF94A3B8),
+                        ),
                       ),
                     ],
                   ),
@@ -873,12 +970,19 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                     children: [
                       const Text(
                         'Target Selesai SPK',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF0F172A)),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 13,
+                            color: Color(0xFF0F172A),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             widget.task.spk.targetSelesai,
@@ -942,7 +1046,10 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),
@@ -953,7 +1060,9 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             child: TextFormField(
               controller: controller,
               textAlign: TextAlign.center,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -971,7 +1080,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
             width: 32,
             child: Text(
               unit,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -1016,7 +1129,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                   children: [
                     const Text(
                       'Kamera Langsung Lapangan',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF334155),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     InkWell(
@@ -1039,17 +1156,29 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                                 children: [
                                   Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: const [
-                                        Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 32),
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Color(0xFF10B981),
+                                          size: 32,
+                                        ),
                                         SizedBox(height: 4),
                                         Text(
                                           'Foto Tersimpan',
-                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF065F46),
+                                          ),
                                         ),
                                         Text(
                                           'Klik untuk ganti',
-                                          style: TextStyle(fontSize: 9, color: Color(0xFF047857)),
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF047857),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1058,14 +1187,21 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                                     bottom: 6,
                                     right: 6,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF065F46),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: const Text(
                                         '1.1 MB',
-                                        style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          fontSize: 8,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1074,7 +1210,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.camera_alt_outlined, color: Color(0xFF10B981), size: 28),
+                                  const Icon(
+                                    Icons.camera_alt_outlined,
+                                    color: Color(0xFF10B981),
+                                    size: 28,
+                                  ),
                                   const SizedBox(height: 6),
                                   const Text(
                                     'Ambil Foto Progres',
@@ -1087,18 +1227,28 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                                   const SizedBox(height: 2),
                                   const Text(
                                     'Kompresi Otomatis (Maks 1.2MB)',
-                                    style: TextStyle(fontSize: 8, color: Color(0xFF64748B)),
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                   const SizedBox(height: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF065F46),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text(
                                       'Wajib Kamera',
-                                      style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1118,7 +1268,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                   children: [
                     const Text(
                       'Foto Awal Lapangan',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF334155),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -1142,14 +1296,21 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                             bottom: 6,
                             left: 6,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0A1D37),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
                                 'Awal (Warga)',
-                                style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -1217,14 +1378,14 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text(
                     'Simpan & Publikasikan Progres Lapangan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
           ),
         ),
@@ -1237,7 +1398,11 @@ class _PuprFormProgresPageState extends State<PuprFormProgresPage> {
           height: 46,
           child: OutlinedButton.icon(
             onPressed: _simpanDraf,
-            icon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF0A1D37)),
+            icon: const Icon(
+              Icons.description_outlined,
+              size: 18,
+              color: Color(0xFF0A1D37),
+            ),
             label: const Text(
               'Simpan Draf',
               style: TextStyle(
