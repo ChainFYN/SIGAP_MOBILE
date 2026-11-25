@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/report_model.dart';
-import '../services/report_service.dart';
+import '../../../models/report_model.dart';
+import '../../../services/report_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class FormLaporanPage extends StatefulWidget {
   const FormLaporanPage({super.key});
@@ -12,23 +14,40 @@ class FormLaporanPage extends StatefulWidget {
 class _FormLaporanPageState extends State<FormLaporanPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // State untuk Data Lokasi
-  String _selectedKecamatan = 'Kecamatan Kaliwates';
-  String _selectedDesa = 'Mangli';
-  late final TextEditingController _jalanController;
+  // Data Master dari API
+  List<Map<String, dynamic>> _kecamatanList = [];
+  List<Map<String, dynamic>> _desaList = [];
+  List<Map<String, dynamic>> _jalanList = [];
+  List<Map<String, dynamic>> _kategoriList = [];
+
+  // ID yang Sedang Dipilih User
+  int? _selectedIdKecamatan;
+  int? _selectedIdDesa;
+  int? _selectedIdJalan;
+  int? _selectedIdKategori;
+
+  bool _isLoadingMaster = true;
+  bool _isLoadingDesa = false;
+  bool _isLoadingJalan = false;
 
   // Koordinat GPS
   String _koordinat = '-8.178923, 113.653284 • Akurasi ± 2.4 meter';
   bool _isRefreshingGps = false;
-
-  // State untuk Kategori
-  String _selectedKategori = 'Jalan Berlubang';
 
   // State untuk Tingkat Urgensi
   String _selectedUrgensi = 'Bahaya Tinggi';
 
   // Deskripsi
   late final TextEditingController _deskripsiController;
+  late final TextEditingController _jalanController;
+
+  // Instance Service & Image Picker
+  final _reportService = ReportService();
+  final ImagePicker _picker = ImagePicker();
+
+  // File foto asli yang dipilih dari kamera/galeri
+  File? _selectedFile;
+  bool _isSubmitting = false;
 
   // Daftar Foto
   final List<ReportPhoto> _photos = [
@@ -49,10 +68,70 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   @override
   void initState() {
     super.initState();
-    _jalanController = TextEditingController(text: 'Jl. Brawijaya No. 42 (Depan Pasar)');
+    _jalanController = TextEditingController();
     _deskripsiController = TextEditingController();
-    _deskripsiController.addListener(() {
-      setState(() {});
+    _deskripsiController.addListener(() => setState(() {}));
+
+    // Muat data awal dari API
+    _loadInitialMasterData();
+  }
+
+  Future<void> _loadInitialMasterData() async {
+    setState(() => _isLoadingMaster = true);
+
+    final kecamatan = await _reportService.getKecamatan();
+    final kategori = await _reportService.getKategori();
+
+    if (!mounted) return;
+    setState(() {
+      _kecamatanList = kecamatan;
+      _kategoriList = kategori;
+
+      // Pilih kategori default jika tersedia
+      if (_kategoriList.isNotEmpty) {
+        _selectedIdKategori = _kategoriList.first['id_kategori'];
+      }
+      _isLoadingMaster = false;
+    });
+  }
+
+  // Dipanggil ketika user memilih Kecamatan
+  Future<void> _onKecamatanChanged(int? idKecamatan) async {
+    if (idKecamatan == null) return;
+    setState(() {
+      _selectedIdKecamatan = idKecamatan;
+      _selectedIdDesa = null;
+      _selectedIdJalan = null;
+      _desaList = [];
+      _jalanList = [];
+      _isLoadingDesa = true;
+    });
+
+    final desa = await _reportService.getDesa(idKecamatan);
+
+    if (!mounted) return;
+    setState(() {
+      _desaList = desa;
+      _isLoadingDesa = false;
+    });
+  }
+
+  // Dipanggil ketika user memilih Desa
+  Future<void> _onDesaChanged(int? idDesa) async {
+    if (idDesa == null) return;
+    setState(() {
+      _selectedIdDesa = idDesa;
+      _selectedIdJalan = null;
+      _jalanList = [];
+      _isLoadingJalan = true;
+    });
+
+    final jalan = await _reportService.getJalan(idDesa);
+
+    if (!mounted) return;
+    setState(() {
+      _jalanList = jalan;
+      _isLoadingJalan = false;
     });
   }
 
@@ -71,7 +150,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       if (mounted) {
         setState(() {
           _isRefreshingGps = false;
-          _koordinat = '-8.1789${(100 + (DateTime.now().millisecond % 800))}, 113.653${(100 + (DateTime.now().microsecond % 800))} • Akurasi ± 1.8 meter';
+          _koordinat =
+              '-8.1789${(100 + (DateTime.now().millisecond % 800))}, 113.653${(100 + (DateTime.now().microsecond % 800))} • Akurasi ± 1.8 meter';
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -145,32 +225,65 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  void _simpanFotoBaru(String sumber) {
-    final now = DateTime.now();
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')} WIB';
-    final index = _photos.length + 1;
-    setState(() {
-      _photos.add(
-        ReportPhoto(
-          fileName: 'foto_bukti_lapangan_$index.jpg',
-          size: '1.${index + 3} MB',
-          tag: index == 3 ? 'Objek Ukur' : 'Tampak Samping',
-          time: timeStr,
+  Future<void> _simpanFotoBaru(String sumber) async {
+    final ImageSource source = (sumber == 'kamera')
+        ? ImageSource.camera
+        : ImageSource.gallery;
+
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality:
+            80, // Kompres sedikit agar proses upload cepat & di bawah batas 5MB
+      );
+
+      if (pickedFile == null) return; // Dibatalkan pengguna
+
+      final file = File(pickedFile.path);
+      final fileSizeInBytes = await file.length();
+      final fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toStringAsFixed(1);
+      final fileName = pickedFile.name;
+
+      final now = DateTime.now();
+      final timeStr =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')} WIB';
+
+      setState(() {
+        _selectedFile = file; // Simpan file fisik untuk dikirim ke backend
+        _photos
+            .clear(); // Backend Laravel saat ini memvalidasi 1 file utama ('foto')
+        _photos.add(
+          ReportPhoto(
+            fileName: fileName,
+            size: '$fileSizeInMB MB',
+            tag: sumber == 'kamera' ? 'Foto Kamera' : 'Foto Galeri',
+            time: timeStr,
+          ),
+        );
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Foto $fileName berhasil dipilih!'),
+          backgroundColor: const Color(0xFF059669),
         ),
       );
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Foto $index berhasil ditambahkan'),
-        backgroundColor: const Color(0xFF059669),
-      ),
-    );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _hapusFoto(int index) {
     final removed = _photos[index];
     setState(() {
       _photos.removeAt(index);
+      _selectedFile = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -187,44 +300,85 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  void _submitLaporan() {
-    if (_formKey.currentState!.validate()) {
-      if (_photos.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mohon unggah minimal 1 foto bukti lapangan!'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-        return;
-      }
+  Future<void> _submitLaporan() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // Buat data laporan baru
-      final newReport = ReportModel(
-        id: 'LAP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        kecamatan: _selectedKecamatan,
-        desa: _selectedDesa,
-        jalanPatokan: _jalanController.text.trim(),
-        koordinat: _koordinat,
-        kategori: _selectedKategori,
-        tingkatBahaya: _selectedUrgensi,
-        deskripsi: _deskripsiController.text.trim(),
-        photos: List.from(_photos),
-        createdAt: DateTime.now(),
+    if (_selectedIdJalan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon pilih ruas jalan terlebih dahulu!'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
+      return;
+    }
 
-      // Simpan ke service
-      ReportService.addReport(newReport);
+    if (_selectedIdKategori == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon pilih kategori kerusakan!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
-      // Tampilkan notifikasi berhasil dan kembali ke halaman sebelumnya
+    if (_selectedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon ambil foto bukti lapangan terlebih dahulu!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    // Gabungkan patokan detail jika ada
+    final patokan = _jalanController.text.trim();
+    final deskripsiLengkap = patokan.isNotEmpty
+        ? '${_deskripsiController.text.trim()} (Patokan: $patokan)'
+        : _deskripsiController.text.trim();
+
+    // Tingkat bahaya persis sesuai enum di Laravel ('Rendah', 'Sedang', 'Bahaya Tinggi')
+    String urgensi = 'Bahaya Tinggi';
+    if (_selectedUrgensi.contains('Rendah')) {
+      urgensi = 'Rendah';
+    } else if (_selectedUrgensi.contains('Sedang')) {
+      urgensi = 'Sedang';
+    }
+
+    // Kirim form data asli ke Laravel
+    final result = await _reportService.createReport(
+      idJalan: _selectedIdJalan!,
+      idKategori: _selectedIdKategori!,
+      tingkatBahaya: urgensi,
+      deskripsi: deskripsiLengkap,
+      imageFile: _selectedFile!,
+      latitude: -8.1789,
+      longitude: 113.6532,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (result['success'] == true) {
+      // Ambil ulang list laporan dari Laravel agar Beranda & Riwayat otomatis sinkron
+      await _reportService.fetchReports();
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text('Laporan berhasil diajukan dan disimpan!'),
+                child: Text(
+                  result['message'] ?? 'Laporan berhasil terkirim ke server!',
+                ),
               ),
             ],
           ),
@@ -233,8 +387,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         ),
       );
 
-      // Kembali ke halaman sebelumnya dengan membawa data laporan
-      Navigator.pop(context, newReport);
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Gagal mengirim laporan'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -275,7 +435,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       backgroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B), size: 20),
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: Color(0xFF1E293B),
+          size: 20,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -310,7 +474,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             radius: 16,
             child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
-        )
+        ),
       ],
     );
   }
@@ -332,11 +496,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         SizedBox(height: 8),
         Text(
           'Laporkan kondisi jalan berlubang, retak, atau ambles secara presisi untuk verifikasi tim teknis lapangan.',
-          style: TextStyle(
-            fontSize: 13,
-            color: Color(0xFF64748B),
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
         ),
       ],
     );
@@ -467,14 +627,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                   const Text(
                     'Mendukung kamera smartphone langsung atau galeri',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -519,10 +679,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           const SizedBox(height: 10),
 
           // List Foto Terunggah
-          ..._photos.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final photo = entry.value;
-            return Container(
+          for (final entry in _photos.asMap().entries)
+            Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -532,7 +690,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               ),
               child: Row(
                 children: [
-                  // Thumbnail preview
                   Container(
                     width: 52,
                     height: 52,
@@ -553,13 +710,16 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           left: 4,
                           bottom: 4,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              photo.size,
+                              entry.value.size,
                               style: const TextStyle(
                                 fontSize: 8,
                                 color: Colors.white,
@@ -572,13 +732,12 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Info nama dan label
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          photo.fileName,
+                          entry.value.fileName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -591,13 +750,16 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                photo.tag,
+                                entry.value.tag,
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -607,7 +769,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              photo.time,
+                              entry.value.time,
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF94A3B8),
@@ -624,12 +786,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                       color: Color(0xFF94A3B8),
                       size: 22,
                     ),
-                    onPressed: () => _hapusFoto(idx),
+                    onPressed: () => _hapusFoto(entry.key),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
 
           const SizedBox(height: 12),
 
@@ -645,7 +806,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.shield_outlined, color: Color(0xFFFBBF24), size: 18),
+                    Icon(
+                      Icons.shield_outlined,
+                      color: Color(0xFFFBBF24),
+                      size: 18,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Panduan Validitas Laporan Warga',
@@ -686,17 +851,28 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 2),
-          child: Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
+          child: Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 14,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: const TextStyle(fontSize: 11, color: Color(0xFFE2E8F0), height: 1.35),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFFE2E8F0),
+                height: 1.35,
+              ),
               children: [
                 TextSpan(
                   text: boldPrefix,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 TextSpan(text: text),
               ],
@@ -709,21 +885,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
 
   // === SEKSI 2: LOKASI GEOSPASIAL INFRASTRUKTUR ===
   Widget _buildLokasiSection() {
-    final kecamatanList = [
-      'Kecamatan Kaliwates',
-      'Kecamatan Sumbersari',
-      'Kecamatan Patrang',
-      'Kecamatan Sukorambi',
-    ];
-
-    final desaList = [
-      'Mangli',
-      'Sempusari',
-      'Jember Kidul',
-      'Kepatihan',
-      'Tegal Besar',
-    ];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -771,111 +932,114 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           // Dropdown Row: Kecamatan & Desa
           Row(
             children: [
+              // 1. Dropdown Kecamatan
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RichText(
-                      text: const TextSpan(
-                        text: 'Kecamatan ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF0F172A),
-                        ),
-                        children: [
-                          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
-                        ],
+                    const Text(
+                      'Kecamatan *',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedKecamatan,
+                    DropdownButtonFormField<int>(
+                      value: _selectedIdKecamatan,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                       ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
+                      hint: const Text(
+                        'Pilih Kecamatan',
+                        style: TextStyle(fontSize: 12),
                       ),
-                      items: kecamatanList.map((k) {
-                        return DropdownMenuItem(
-                          value: k,
-                          child: Text(k, overflow: TextOverflow.ellipsis),
+                      items: _kecamatanList.map((k) {
+                        return DropdownMenuItem<int>(
+                          value: k['id_kecamatan'] as int,
+                          child: Text(
+                            k['nama_kecamatan'].toString(),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedKecamatan = val);
-                        }
-                      },
+                      onChanged: _onKecamatanChanged,
+                      validator: (val) => val == null ? 'Wajib dipilih' : null,
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
+
+              // 2. Dropdown Desa
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RichText(
-                      text: const TextSpan(
-                        text: 'Desa / Kelurahan ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF0F172A),
+                    Row(
+                      children: [
+                        const Text(
+                          'Desa *',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
-                        children: [
-                          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                        if (_isLoadingDesa) ...[
+                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedDesa,
+                    DropdownButtonFormField<int>(
+                      value: _selectedIdDesa,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
                       ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
+                      hint: Text(
+                        _selectedIdKecamatan == null
+                            ? 'Pilih Kec dulu'
+                            : 'Pilih Desa',
+                        style: const TextStyle(fontSize: 12),
                       ),
-                      items: desaList.map((d) {
-                        return DropdownMenuItem(
-                          value: d,
-                          child: Text(d, overflow: TextOverflow.ellipsis),
+                      items: _desaList.map((d) {
+                        return DropdownMenuItem<int>(
+                          value: d['id_desa'] as int,
+                          child: Text(
+                            d['nama_desa'].toString(),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedDesa = val);
-                        }
-                      },
+                      onChanged: _selectedIdKecamatan == null
+                          ? null
+                          : _onDesaChanged,
+                      validator: (val) => val == null ? 'Wajib dipilih' : null,
                     ),
                   ],
                 ),
@@ -885,114 +1049,168 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
 
           const SizedBox(height: 14),
 
-          // Ruas Jalan & Patokan Lokasi
-          RichText(
-            text: const TextSpan(
-              text: 'Ruas Jalan & Patokan Lokasi ',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+          // 3. Dropdown Ruas Jalan (Dari Database Laravel!)
+          Row(
+            children: [
+              const Text(
+                'Ruas Jalan Terdaftar *',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
               ),
-              children: [
-                TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+              if (_isLoadingJalan) ...[
+                const SizedBox(width: 6),
+                const SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<int>(
+            value: _selectedIdJalan,
+            isExpanded: true,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(
+                Icons.add_road_rounded,
+                color: Color(0xFF64748B),
+                size: 20,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+            ),
+            hint: Text(
+              _selectedIdDesa == null
+                  ? 'Pilih Desa terlebih dahulu'
+                  : 'Pilih Ruas Jalan',
+              style: const TextStyle(fontSize: 12),
+            ),
+            items: _jalanList.map((j) {
+              return DropdownMenuItem<int>(
+                value: j['id_jalan'] as int,
+                child: Text(
+                  j['nama_jalan'].toString(),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: _selectedIdDesa == null
+                ? null
+                : (val) => setState(() => _selectedIdJalan = val),
+            validator: (val) => val == null ? 'Ruas jalan wajib dipilih' : null,
+          ),
+
+          const SizedBox(height: 14),
+
+          // 4. Patokan Tambahan / Detail Titik Jalan
+          const Text(
+            'Patokan Lokasi Detail (Opsional)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 6),
           TextFormField(
             controller: _jalanController,
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) {
-                return 'Ruas jalan dan patokan wajib diisi';
-              }
-              return null;
-            },
             style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.near_me_outlined, color: Color(0xFF64748B), size: 20),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              hintText: 'Contoh: Depan Indomaret / Depan Rumah No. 42',
+              prefixIcon: const Icon(
+                Icons.near_me_outlined,
+                color: Color(0xFF64748B),
+                size: 20,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
               ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
             ),
           ),
-
           const SizedBox(height: 14),
+          _buildGpsField(),
+        ],
+      ),
+    );
+  }
 
-          // Koordinat GPS Box
+  Widget _buildGpsField() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        children: [
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFF10B981),
+              shape: BoxShape.circle,
             ),
-            child: Row(
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
+                const Text(
+                  'Koordinat Lat/Long Terkunci',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Koordinat Lat/Long Terkunci',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _koordinat,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _isRefreshingGps ? null : _segarkanGps,
-                  icon: _isRefreshingGps
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh_rounded, size: 14),
-                  label: const Text(
-                    'Segarkan GPS',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFF93C5FD)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  _koordinat,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF64748B),
                   ),
                 ),
               ],
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: _isRefreshingGps ? null : _segarkanGps,
+            icon: _isRefreshingGps
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh_rounded, size: 14),
+            label: const Text(
+              'Segarkan GPS',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF2563EB),
+              side: const BorderSide(color: Color(0xFF93C5FD)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              visualDensity: VisualDensity.compact,
             ),
           ),
         ],
@@ -1002,38 +1220,17 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
 
   // === SEKSI 3: KATEGORI KERUSAKAN JALAN ===
   Widget _buildKategoriSection() {
-    final categories = [
-      {
-        'title': 'Jalan Berlubang',
-        'subtitle': 'Kedalaman > 5 cm',
-        'icon': Icons.adjust_rounded,
-      },
-      {
-        'title': 'Retak Buaya',
-        'subtitle': 'Pola retak merata',
-        'icon': Icons.grain_rounded,
-      },
-      {
-        'title': 'Ambles / Longsor',
-        'subtitle': 'Penurunan struktur',
-        'icon': Icons.trending_down_rounded,
-      },
-      {
-        'title': 'Bergelombang',
-        'subtitle': 'Permukaan tidak rata',
-        'icon': Icons.waves_rounded,
-      },
-      {
-        'title': 'Kerusakan Drainase',
-        'subtitle': 'Saluran air meluap',
-        'icon': Icons.grid_view_rounded,
-      },
-      {
-        'title': 'Rambu & Trotoar',
-        'subtitle': 'Fasilitas pejalan kaki',
-        'icon': Icons.signpost_outlined,
-      },
-    ];
+    // Helper icon berdasarkan nama kategori
+    IconData getCategoryIcon(String name) {
+      final n = name.toLowerCase();
+      if (n.contains('lubang')) return Icons.adjust_rounded;
+      if (n.contains('gelombang')) return Icons.waves_rounded;
+      if (n.contains('retak')) return Icons.grain_rounded;
+      if (n.contains('ambles') || n.contains('longsor')) {
+        return Icons.trending_down_rounded;
+      }
+      return Icons.category_outlined;
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1082,108 +1279,71 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 14),
 
-          // Grid 2 Kolom
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: categories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.8,
-            ),
-            itemBuilder: (context, index) {
-              final cat = categories[index];
-              final title = cat['title'] as String;
-              final subtitle = cat['subtitle'] as String;
-              final icon = cat['icon'] as IconData;
-              final isSelected = _selectedKategori == title;
+          if (_isLoadingMaster)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _kategoriList.map((kat) {
+                final idKat = kat['id_kategori'] as int;
+                final namaKat = kat['nama_kategori'].toString();
+                final isSelected = _selectedIdKategori == idKat;
 
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedKategori = title;
-                  });
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFFFF7ED) : const Color(0xFFFAFAFA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFFEA580C) : const Color(0xFFE2E8F0),
-                      width: isSelected ? 1.5 : 1.0,
+                return InkWell(
+                  onTap: () => setState(() => _selectedIdKategori = idKat),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFFEDD5) : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 18,
-                              color: isSelected ? const Color(0xFFEA580C) : const Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFEFF6FF)
+                          : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFFE2E8F0),
+                        width: isSelected ? 1.5 : 1,
                       ),
-                      if (isSelected)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEA580C),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'TERPILIH',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          getCategoryIcon(namaKat),
+                          size: 18,
+                          color: isSelected
+                              ? const Color(0xFF2563EB)
+                              : const Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          namaKat,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFF1D4ED8)
+                                : const Color(0xFF334155),
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -1237,10 +1397,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           const SizedBox(height: 4),
           const Text(
             'Estimasi potensi risiko terhadap pengguna jalan',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 14),
 
@@ -1253,7 +1410,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 color: Color(0xFF0F172A),
               ),
               children: [
-                TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                TextSpan(
+                  text: '*',
+                  style: TextStyle(color: Colors.red),
+                ),
               ],
             ),
           ),
@@ -1275,15 +1435,22 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (title == 'Bahaya Tinggi' ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB))
+                      ? (title == 'Bahaya Tinggi'
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB))
                       : const Color(0xFFFAFAFA),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? (title == 'Bahaya Tinggi' ? const Color(0xFFF87171) : const Color(0xFFFBBF24))
+                        ? (title == 'Bahaya Tinggi'
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFFFBBF24))
                         : const Color(0xFFE2E8F0),
                     width: isSelected ? 1.5 : 1.0,
                   ),
@@ -1298,7 +1465,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? (title == 'Bahaya Tinggi' ? const Color(0xFFEF4444) : const Color(0xFFEA580C))
+                              ? (title == 'Bahaya Tinggi'
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFEA580C))
                               : const Color(0xFFCBD5E1),
                           width: 2,
                         ),
@@ -1388,16 +1557,16 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     color: Color(0xFF0F172A),
                   ),
                   children: [
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
               Text(
                 '${_deskripsiController.text.length}/500 karakter',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF94A3B8),
-                ),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
               ),
             ],
           ),
@@ -1406,7 +1575,13 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             controller: _deskripsiController,
             maxLines: 4,
             maxLength: 500,
-            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => const SizedBox.shrink(),
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => const SizedBox.shrink(),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
                 return 'Deskripsi kondisi lapangan wajib diisi';
@@ -1441,7 +1616,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _submitLaporan,
+        onPressed: _isSubmitting ? null : _submitLaporan,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFEA580C),
           foregroundColor: Colors.white,
@@ -1450,20 +1625,26 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           elevation: 2,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Submit',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
+        child: _isSubmitting
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text(
+                    'Submit Laporan',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, size: 18),
+                ],
               ),
-            ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 18),
-          ],
-        ),
       ),
     );
   }
