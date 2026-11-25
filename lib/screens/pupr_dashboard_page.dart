@@ -3,7 +3,7 @@ import '../models/pupr_task_model.dart';
 import '../services/pupr_service.dart';
 import '../services/location_nav_service.dart';
 import 'pupr_form_progres_page.dart';
-import 'login_page.dart';
+import '../features/auth/login/login_page.dart';
 
 class PuprDashboardPage extends StatefulWidget {
   const PuprDashboardPage({super.key});
