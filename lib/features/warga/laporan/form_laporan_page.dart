@@ -14,18 +14,30 @@ class FormLaporanPage extends StatefulWidget {
 class _FormLaporanPageState extends State<FormLaporanPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // State untuk Data Lokasi
-  String _selectedKecamatan = 'Kecamatan Kaliwates';
-  String _selectedDesa = 'Mangli';
-  late final TextEditingController _jalanController;
+  // Master data dari database via API
+  List<Map<String, dynamic>> _kecamatanList = [];
+  List<Map<String, dynamic>> _desaList = [];
+  List<Map<String, dynamic>> _jalanList = [];
+  List<Map<String, dynamic>> _kategoriList = [];
 
-  // Koordinat GPS
+  // ID yang dipilih user
+  int? _selectedIdKecamatan;
+  int? _selectedIdDesa;
+  int? _selectedIdJalan;
+  int? _selectedIdKategori;
+
+  bool _isLoadingMaster = true;
+  bool _isLoadingDesa = false;
+  bool _isLoadingJalan = false;
+
+  // Koordinat GPS & Urgensi
   String _koordinat = '-8.178923, 113.653284 • Akurasi ± 2.4 meter';
   bool _isRefreshingGps = false;
-
-  // State untuk Kategori & Urgensi
-  String _selectedKategori = 'Jalan Berlubang';
   String _selectedUrgensi = 'Bahaya Tinggi';
+
+  // Controller teks
+  late final TextEditingController
+  _jalanPatokanController; // Patokan spesifik (opsional)
   late final TextEditingController _deskripsiController;
 
   // Instance Service & Image Picker
@@ -42,20 +54,73 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   @override
   void initState() {
     super.initState();
-    _jalanController = TextEditingController(
-      text: 'Jl. Brawijaya No. 42 (Depan Pasar)',
-    );
+    _jalanPatokanController = TextEditingController();
     _deskripsiController = TextEditingController();
-    _deskripsiController.addListener(() {
-      setState(() {});
-    });
+    _deskripsiController.addListener(() => setState(() {}));
+
+    // Ambil data awal (Kecamatan & Kategori) dari Laravel
+    _loadInitialData();
   }
 
   @override
   void dispose() {
-    _jalanController.dispose();
+    _jalanPatokanController.dispose();
     _deskripsiController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoadingMaster = true);
+    final k = await _reportService.getKecamatan();
+    final kat = await _reportService.getKategori();
+
+    if (!mounted) return;
+    setState(() {
+      _kecamatanList = k;
+      _kategoriList = kat;
+      if (_kategoriList.isNotEmpty) {
+        _selectedIdKategori = _kategoriList.first['id_kategori'] as int;
+      }
+      _isLoadingMaster = false;
+    });
+  }
+
+  // Dipanggil saat user memilih Kecamatan
+  Future<void> _onKecamatanChanged(int? idKecamatan) async {
+    if (idKecamatan == null) return;
+    setState(() {
+      _selectedIdKecamatan = idKecamatan;
+      _selectedIdDesa = null;
+      _selectedIdJalan = null;
+      _desaList = [];
+      _jalanList = [];
+      _isLoadingDesa = true;
+    });
+
+    final desa = await _reportService.getDesa(idKecamatan);
+    if (!mounted) return;
+    setState(() {
+      _desaList = desa;
+      _isLoadingDesa = false;
+    });
+  }
+
+  // Dipanggil saat user memilih Desa
+  Future<void> _onDesaChanged(int? idDesa) async {
+    if (idDesa == null) return;
+    setState(() {
+      _selectedIdDesa = idDesa;
+      _selectedIdJalan = null;
+      _jalanList = [];
+      _isLoadingJalan = true;
+    });
+
+    final jalan = await _reportService.getJalan(idDesa);
+    if (!mounted) return;
+    setState(() {
+      _jalanList = jalan;
+      _isLoadingJalan = false;
+    });
   }
 
   void _segarkanGps() {
@@ -141,8 +206,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   }
 
   Future<void> _simpanFotoBaru(String sumber) async {
-    final ImageSource source =
-        (sumber == 'kamera') ? ImageSource.camera : ImageSource.gallery;
+    final ImageSource source = (sumber == 'kamera')
+        ? ImageSource.camera
+        : ImageSource.gallery;
 
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -213,50 +279,28 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  void _pilihKategori(String title) {
-    setState(() => _selectedKategori = title);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          duration: const Duration(seconds: 1),
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFFFB923C),
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  'Dipilih: $title',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-  }
-
   Future<void> _submitLaporan() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedIdJalan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon pilih ruas jalan terlebih dahulu!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedIdKategori == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon pilih kategori kerusakan!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     if (_selectedFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -270,32 +314,18 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
 
     setState(() => _isSubmitting = true);
 
-    // Pemetaan kategori UI ke id_kategori di database Laravel:
-    // 1: Berlubang, 2: Bergelombang, 3: Retak, 4: Ambles/Longsor, 5: Lainnya
-    int idKategori = 1;
-    if (_selectedKategori.contains('Bergelombang')) {
-      idKategori = 2;
-    } else if (_selectedKategori.contains('Retak')) {
-      idKategori = 3;
-    } else if (_selectedKategori.contains('Longsor') ||
-        _selectedKategori.contains('Ambles')) {
-      idKategori = 4;
-    }
+    // Gabungkan patokan detail jika ada
+    final patokan = _jalanPatokanController.text.trim();
+    final deskripsiLengkap = patokan.isNotEmpty
+        ? '${_deskripsiController.text.trim()} (Patokan: $patokan)'
+        : _deskripsiController.text.trim();
 
-    const int idJalan = 1;
-
-    String urgensi = 'Bahaya Tinggi';
-    if (_selectedUrgensi.contains('Rendah')) {
-      urgensi = 'Rendah';
-    } else if (_selectedUrgensi.contains('Sedang')) {
-      urgensi = 'Sedang';
-    }
-
+    // Kirim data asli ke Laravel (ID Jalan dan ID Kategori resmi)
     final result = await _reportService.createReport(
-      idJalan: idJalan,
-      idKategori: idKategori,
-      tingkatBahaya: urgensi,
-      deskripsi: _deskripsiController.text.trim(),
+      idJalan: _selectedIdJalan!,
+      idKategori: _selectedIdKategori!,
+      tingkatBahaya: _selectedUrgensi,
+      deskripsi: deskripsiLengkap,
       imageFile: _selectedFile!,
       latitude: -8.1789,
       longitude: 113.6532,
@@ -305,20 +335,10 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     setState(() => _isSubmitting = false);
 
     if (result['success'] == true) {
-      final newReport = ReportModel(
-        id: 'LAP-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        kecamatan: _selectedKecamatan,
-        desa: _selectedDesa,
-        jalanPatokan: _jalanController.text.trim(),
-        koordinat: _koordinat,
-        kategori: _selectedKategori,
-        tingkatBahaya: _selectedUrgensi,
-        deskripsi: _deskripsiController.text.trim(),
-        photos: List.from(_photos),
-        createdAt: DateTime.now(),
-      );
-      ReportService.addReport(newReport);
+      // Ambil ulang list laporan agar halaman Beranda & Riwayat langsung terupdate
+      await _reportService.fetchReports();
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -337,7 +357,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         ),
       );
 
-      Navigator.pop(context, newReport);
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -458,21 +478,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
 
   // === SEKSI 1: LOKASI GEOSPASIAL INFRASTRUKTUR ===
   Widget _buildLokasiSection() {
-    const kecamatanList = [
-      'Kecamatan Kaliwates',
-      'Kecamatan Sumbersari',
-      'Kecamatan Patrang',
-      'Kecamatan Sukorambi',
-    ];
-
-    const desaList = [
-      'Mangli',
-      'Sempusari',
-      'Jember Kidul',
-      'Kepatihan',
-      'Tegal Besar',
-    ];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
@@ -506,17 +511,18 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 16),
 
-          // Dropdown Row: Kecamatan & Desa
+          // 1. Dropdown Kecamatan & Desa
           Row(
             children: [
+              // Kecamatan
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRequiredLabel('Kecamatan'),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedKecamatan,
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedIdKecamatan,
                       isExpanded: true,
                       decoration: _inputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
@@ -524,37 +530,49 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           vertical: 10,
                         ),
                       ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
+                      hint: const Text(
+                        'Pilih Kecamatan',
+                        style: TextStyle(fontSize: 12),
                       ),
-                      items: kecamatanList
-                          .map(
-                            (k) => DropdownMenuItem(
-                              value: k,
-                              child: Text(k, overflow: TextOverflow.ellipsis),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedKecamatan = val);
-                        }
-                      },
+                      items: _kecamatanList.map((k) {
+                        return DropdownMenuItem<int>(
+                          value: k['id_kecamatan'] as int,
+                          child: Text(
+                            k['nama_kecamatan'].toString(),
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: _onKecamatanChanged,
+                      validator: (v) => v == null ? 'Pilih kecamatan' : null,
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
+
+              // Desa
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildRequiredLabel('Desa / Kelurahan'),
+                    Row(
+                      children: [
+                        _buildRequiredLabel('Desa / Kelurahan'),
+                        if (_isLoadingDesa) ...[
+                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedDesa,
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedIdDesa,
                       isExpanded: true,
                       decoration: _inputDecoration(
                         contentPadding: const EdgeInsets.symmetric(
@@ -562,24 +580,26 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                           vertical: 10,
                         ),
                       ),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
+                      hint: Text(
+                        _selectedIdKecamatan == null
+                            ? 'Pilih Kec dulu'
+                            : 'Pilih Desa',
+                        style: const TextStyle(fontSize: 12),
                       ),
-                      items: desaList
-                          .map(
-                            (d) => DropdownMenuItem(
-                              value: d,
-                              child: Text(d, overflow: TextOverflow.ellipsis),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedDesa = val);
-                        }
-                      },
+                      items: _desaList.map((d) {
+                        return DropdownMenuItem<int>(
+                          value: d['id_desa'] as int,
+                          child: Text(
+                            d['nama_desa'].toString(),
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: _selectedIdKecamatan == null
+                          ? null
+                          : _onDesaChanged,
+                      validator: (v) => v == null ? 'Pilih desa' : null,
                     ),
                   ],
                 ),
@@ -588,19 +608,73 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 14),
 
-          // Ruas Jalan & Patokan Lokasi
-          _buildRequiredLabel('Ruas Jalan & Patokan Lokasi'),
+          // 2. Ruas Jalan (Dropdown dari Database!)
+          Row(
+            children: [
+              _buildRequiredLabel('Ruas Jalan Terdaftar'),
+              if (_isLoadingJalan) ...[
+                const SizedBox(width: 6),
+                const SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<int>(
+            initialValue: _selectedIdJalan,
+            isExpanded: true,
+            decoration: _inputDecoration(
+              prefixIcon: const Icon(
+                Icons.add_road_rounded,
+                color: Color(0xFF64748B),
+                size: 20,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+            ),
+            hint: Text(
+              _selectedIdDesa == null
+                  ? 'Pilih Desa terlebih dahulu'
+                  : 'Pilih Ruas Jalan Resmi',
+              style: const TextStyle(fontSize: 12),
+            ),
+            items: _jalanList.map((j) {
+              return DropdownMenuItem<int>(
+                value: j['id_jalan'] as int,
+                child: Text(
+                  j['nama_jalan'].toString(),
+                  style: const TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: _selectedIdDesa == null
+                ? null
+                : (v) => setState(() => _selectedIdJalan = v),
+            validator: (v) => v == null ? 'Ruas jalan wajib dipilih' : null,
+          ),
+          const SizedBox(height: 14),
+
+          // 3. Patokan Lokasi Detail (Opsional)
+          const Text(
+            'Patokan Lokasi Detail (Opsional)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+          ),
           const SizedBox(height: 6),
           TextFormField(
-            controller: _jalanController,
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) {
-                return 'Ruas jalan dan patokan wajib diisi';
-              }
-              return null;
-            },
+            controller: _jalanPatokanController,
             style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
             decoration: _inputDecoration(
+              hintText: 'Contoh: Depan Indomaret / Depan Rumah No. 42',
               prefixIcon: const Icon(
                 Icons.near_me_outlined,
                 color: Color(0xFF64748B),
@@ -610,7 +684,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 14),
 
-          // Koordinat GPS Box
+          // 4. Koordinat GPS Box
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -687,40 +761,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   }
 
   // === SEKSI 2: KATEGORI KERUSAKAN JALAN ===
+  // === SEKSI 2: KATEGORI KERUSAKAN JALAN ===
   Widget _buildKategoriSection() {
-    final categories = [
-      {
-        'title': 'Jalan Berlubang',
-        'subtitle': 'Kedalaman > 5 cm',
-        'icon': Icons.adjust_rounded,
-      },
-      {
-        'title': 'Retak Buaya',
-        'subtitle': 'Pola retak merata',
-        'icon': Icons.grain_rounded,
-      },
-      {
-        'title': 'Ambles / Longsor',
-        'subtitle': 'Penurunan struktur',
-        'icon': Icons.trending_down_rounded,
-      },
-      {
-        'title': 'Bergelombang',
-        'subtitle': 'Permukaan tidak rata',
-        'icon': Icons.waves_rounded,
-      },
-      {
-        'title': 'Kerusakan Drainase',
-        'subtitle': 'Saluran air meluap',
-        'icon': Icons.grid_view_rounded,
-      },
-      {
-        'title': 'Rambu & Trotoar',
-        'subtitle': 'Fasilitas pejalan kaki',
-        'icon': Icons.signpost_outlined,
-      },
-    ];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
@@ -756,116 +798,59 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             ],
           ),
           const SizedBox(height: 14),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: categories.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              mainAxisExtent: 104,
-            ),
-            itemBuilder: (context, index) {
-              final cat = categories[index];
-              final title = cat['title'] as String;
-              final subtitle = cat['subtitle'] as String;
-              final icon = cat['icon'] as IconData;
-              final isSelected = _selectedKategori == title;
 
-              return InkWell(
-                onTap: () => _pilihKategori(title),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFFFF7ED)
-                        : const Color(0xFFFAFAFA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+          if (_isLoadingMaster)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _kategoriList.map((kat) {
+                final idKat = kat['id_kategori'] as int;
+                final namaKat = kat['nama_kategori'].toString();
+                final isSelected = _selectedIdKategori == idKat;
+
+                return InkWell(
+                  onTap: () => setState(() => _selectedIdKategori = idKat),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFEA580C)
-                          : const Color(0xFFE2E8F0),
-                      width: isSelected ? 1.5 : 1.0,
+                          ? const Color(0xFFFFF7ED)
+                          : const Color(0xFFFAFAFA),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFEA580C)
+                            : const Color(0xFFE2E8F0),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      namaKat,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFFEA580C)
+                            : const Color(0xFF334155),
+                      ),
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFFFFEDD5)
-                                  : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 18,
-                              color: isSelected
-                                  ? const Color(0xFFEA580C)
-                                  : const Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? const Color(0xFF0F172A)
-                                  : const Color(0xFF334155),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (isSelected)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEA580C),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'TERPILIH',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -934,15 +919,15 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isHigh
-                          ? const Color(0xFFFEF2F2)
-                          : const Color(0xFFFFFBEB))
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB))
                       : const Color(0xFFFAFAFA),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
                         ? (isHigh
-                            ? const Color(0xFFF87171)
-                            : const Color(0xFFFBBF24))
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFFFBBF24))
                         : const Color(0xFFE2E8F0),
                     width: isSelected ? 1.5 : 1.0,
                   ),
@@ -957,8 +942,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         border: Border.all(
                           color: isSelected
                               ? (isHigh
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFFEA580C))
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFEA580C))
                               : const Color(0xFFCBD5E1),
                           width: 2,
                         ),
@@ -1050,13 +1035,13 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             controller: _deskripsiController,
             maxLines: 4,
             maxLength: 500,
-            buildCounter: (
-              context, {
-              required currentLength,
-              required isFocused,
-              maxLength,
-            }) =>
-                const SizedBox.shrink(),
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => const SizedBox.shrink(),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
                 return 'Deskripsi kondisi lapangan wajib diisi';
@@ -1158,10 +1143,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFFFDF5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFFDBA74),
-                  width: 1.5,
-                ),
+                border: Border.all(color: const Color(0xFFFDBA74), width: 1.5),
               ),
               child: Column(
                 children: [
