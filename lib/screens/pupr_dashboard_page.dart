@@ -1017,24 +1017,31 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.pin_drop_outlined,
-                                size: 16,
-                                color: Color(0xFFF59E0B),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                task.titikKm,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.pin_drop_outlined,
+                                  size: 16,
+                                  color: Color(0xFFF59E0B),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    task.titikKm,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
