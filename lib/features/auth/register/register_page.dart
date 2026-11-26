@@ -397,7 +397,7 @@ class _RegisterPageState extends State<RegisterPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: _submit,
+        onPressed: _isLoading ? null : _submit,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF111827),
           foregroundColor: Colors.white,
@@ -406,17 +406,30 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_add_alt_1, color: Color(0xFF22C55E), size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Daftarkan Akun Pelapor Warga',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_add_alt_1,
+                    color: Color(0xFF22C55E),
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Daftarkan Akun Pelapor Warga',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -554,7 +567,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _buildLabel(label),
         const SizedBox(height: 7),
         DropdownButtonFormField<String>(
-          initialValue: value,
+          value: value,
           isExpanded: true,
           validator: (v) => v == null ? 'Wajib dipilih' : null,
           decoration: _inputDecoration(hint),
