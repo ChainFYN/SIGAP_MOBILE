@@ -317,8 +317,9 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 18),
                           Align(
                             alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 const Text(
                                   'Belum memiliki akun? ',

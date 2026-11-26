@@ -427,20 +427,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none, color: Colors.black54),
-          onPressed: () {},
-        ),
-        const Padding(
-          padding: EdgeInsets.only(right: 16.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.grey,
-            radius: 16,
-            child: Icon(Icons.person, color: Colors.white, size: 20),
-          ),
-        ),
-      ],
     );
   }
 
@@ -459,15 +445,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF0F172A),
                 height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Laporkan kondisi jalan berlubang, retak, atau ambles secara presisi untuk verifikasi tim teknis lapangan.',
-              style: TextStyle(
-                fontSize: compact ? 12 : 13,
-                color: const Color(0xFF64748B),
-                height: 1.45,
               ),
             ),
           ],
@@ -500,7 +477,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
               ),
               const SizedBox(width: 10),
               const Text(
-                'Lokasi Geospasial Infrastruktur',
+                'Lokasi Kerusakan Jalan',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -611,7 +588,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           // 2. Ruas Jalan (Dropdown dari Database!)
           Row(
             children: [
-              _buildRequiredLabel('Ruas Jalan Terdaftar'),
+              _buildRequiredLabel('Ruas Jalan'),
               if (_isLoadingJalan) ...[
                 const SizedBox(width: 6),
                 const SizedBox(
@@ -640,7 +617,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             hint: Text(
               _selectedIdDesa == null
                   ? 'Pilih Desa terlebih dahulu'
-                  : 'Pilih Ruas Jalan Resmi',
+                  : 'Pilih Ruas Jalan',
               style: const TextStyle(fontSize: 12),
             ),
             items: _jalanList.map((j) {
@@ -660,9 +637,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 14),
 
-          // 3. Patokan Lokasi Detail (Opsional)
+          // 3. Patokan Lokasi Detail
           const Text(
-            'Patokan Lokasi Detail (Opsional)',
+            'Patokan Detail Lokasi',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -760,7 +737,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     );
   }
 
-  // === SEKSI 2: KATEGORI KERUSAKAN JALAN ===
   // === SEKSI 2: KATEGORI KERUSAKAN JALAN ===
   Widget _buildKategoriSection() {
     return Container(
@@ -883,22 +859,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Tingkat Bahaya & Narasi Detail',
+            'Tingkat Bahaya & Detail Kerusakan',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Estimasi potensi risiko terhadap pengguna jalan',
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 14),
-          _buildRequiredLabel('Tingkat Urgensi Kerusakan'),
-          const SizedBox(height: 8),
-
+          const SizedBox(height: 12),
           // Radio Cards
           ...levels.map((lvl) {
             final title = lvl['title'] as String;
@@ -1023,9 +991,9 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildRequiredLabel('Deskripsi Detail Kondisi Lapangan'),
+              _buildRequiredLabel('Deskripsi Detail Kondisi Jalan'),
               Text(
-                '${_deskripsiController.text.length}/500 karakter',
+                '${_deskripsiController.text.length}/200 karakter',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
               ),
             ],
@@ -1034,7 +1002,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           TextFormField(
             controller: _deskripsiController,
             maxLines: 4,
-            maxLength: 500,
+            maxLength: 200,
             buildCounter:
                 (
                   context, {
@@ -1093,22 +1061,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEA580C),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'SEDANG DIISI',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -1373,12 +1325,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
-        children: const [
-          TextSpan(
-            text: '*',
-            style: TextStyle(color: Colors.red),
-          ),
-        ],
       ),
     );
   }
