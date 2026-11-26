@@ -402,64 +402,42 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   // === APP BAR ===
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF101B93),
+      backgroundColor: Colors.white,
       elevation: 0,
-      toolbarHeight: 70,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-      ),
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back_ios_new_rounded,
-          color: Colors.white,
+          color: Color(0xFF1E293B),
           size: 20,
         ),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.location_on, color: Colors.white, size: 18),
-          SizedBox(width: 8),
+          Icon(Icons.location_on, color: Colors.blue[800]),
+          const SizedBox(width: 8),
           Text(
             'SIGAP',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
-          ),
-          SizedBox(width: 8),
-          Text(
-            'Warga',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFCBD5E1),
+              fontSize: 14,
+              color: Colors.blue[900],
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E3A8A).withValues(alpha: 0.4),
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF334155)),
-            ),
-            child: const Icon(
-              Icons.account_circle_outlined,
-              color: Colors.white,
-              size: 22,
-            ),
+        IconButton(
+          icon: const Icon(Icons.notifications_none, color: Colors.black54),
+          onPressed: () {},
+        ),
+        const Padding(
+          padding: EdgeInsets.only(right: 16.0),
+          child: CircleAvatar(
+            backgroundColor: Colors.grey,
+            radius: 16,
+            child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
         ),
       ],
@@ -837,99 +815,42 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 final namaKat = kat['nama_kategori'].toString();
                 final isSelected = _selectedIdKategori == idKat;
 
-              return InkWell(
-                onTap: () => _pilihKategori(title),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFFFF7ED)
-                        : const Color(0xFFFAFAFA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+                return InkWell(
+                  onTap: () => setState(() => _selectedIdKategori = idKat),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFEA580C)
-                          : const Color(0xFFE2E8F0),
-                      width: isSelected ? 1.5 : 1.0,
+                          ? const Color(0xFFFFF7ED)
+                          : const Color(0xFFFAFAFA),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFEA580C)
+                            : const Color(0xFFE2E8F0),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      namaKat,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFFEA580C)
+                            : const Color(0xFF334155),
+                      ),
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFFFFEDD5)
-                                  : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 18,
-                              color: isSelected
-                                  ? const Color(0xFFEA580C)
-                                  : const Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? const Color(0xFF0F172A)
-                                  : const Color(0xFF334155),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (isSelected)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEA580C),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'TERPILIH',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -977,11 +898,14 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           const SizedBox(height: 14),
           _buildRequiredLabel('Tingkat Urgensi Kerusakan'),
           const SizedBox(height: 8),
+
+          // Radio Cards
           ...levels.map((lvl) {
             final title = lvl['title'] as String;
             final subtitle = lvl['subtitle'] as String;
             final dotColor = lvl['dotColor'] as Color;
             final isSelected = _selectedUrgensi == title;
+            final isHigh = title == 'Bahaya Tinggi';
 
             return InkWell(
               onTap: () => setState(() => _selectedUrgensi = title),
@@ -995,15 +919,15 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isHigh
-                          ? const Color(0xFFFEF2F2)
-                          : const Color(0xFFFFFBEB))
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB))
                       : const Color(0xFFFAFAFA),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
                         ? (isHigh
-                            ? const Color(0xFFF87171)
-                            : const Color(0xFFFBBF24))
+                              ? const Color(0xFFF87171)
+                              : const Color(0xFFFBBF24))
                         : const Color(0xFFE2E8F0),
                     width: isSelected ? 1.5 : 1.0,
                   ),
@@ -1018,21 +942,23 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         border: Border.all(
                           color: isSelected
                               ? (isHigh
-                                  ? const Color(0xFFEF4444)
-                                  : const Color(0xFFEA580C))
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFFEA580C))
                               : const Color(0xFFCBD5E1),
                           width: 2,
                         ),
                       ),
                       child: isSelected
-                          ? Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: title == 'Bahaya Tinggi'
-                                    ? const Color(0xFFEF4444)
-                                    : const Color(0xFFEA580C),
-                                shape: BoxShape.circle,
+                          ? Center(
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: isHigh
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFFEA580C),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             )
                           : null,
@@ -1042,15 +968,30 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected && title == 'Bahaya Tinggi'
-                                  ? const Color(0xFFB91C1C)
-                                  : const Color(0xFF0F172A),
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected && isHigh
+                                      ? const Color(0xFFB91C1C)
+                                      : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              if (isHigh) ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEF4444),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -1077,6 +1018,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             );
           }),
           const SizedBox(height: 14),
+
+          // Deskripsi Detail
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1092,13 +1035,13 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
             controller: _deskripsiController,
             maxLines: 4,
             maxLength: 500,
-            buildCounter: (
-              context, {
-              required currentLength,
-              required isFocused,
-              maxLength,
-            }) =>
-                const SizedBox.shrink(),
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => const SizedBox.shrink(),
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
                 return 'Deskripsi kondisi lapangan wajib diisi';
@@ -1373,7 +1316,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           backgroundColor: const Color(0xFFEA580C),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           elevation: 2,
         ),
@@ -1409,7 +1352,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
   }) {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: borderColor, width: borderWidth),
       boxShadow: [
         BoxShadow(
@@ -1454,11 +1397,11 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       prefixIcon: prefixIcon,
       contentPadding: contentPadding,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
       ),
       filled: true,
