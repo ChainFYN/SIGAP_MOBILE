@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../warga/home/home_page.dart';
-import '../otp/otp_verification_page.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/report_service.dart';
 
@@ -35,6 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   int? _selectedIdKecamatan;
   int? _selectedIdDesa;
+  String? _selectedKecamatan;
 
   @override
   void initState() {
@@ -284,8 +284,21 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: 'Kecamatan Domisili',
                 hint: 'Pilih Kecamatan',
                 value: _selectedKecamatan,
-                items: _kecamatanList,
-                onChanged: (value) => setState(() => _selectedKecamatan = value),
+                items: _kecamatanList
+                    .map((k) => k['nama_kecamatan'].toString())
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  final kecamatan = _kecamatanList.firstWhere(
+                    (k) => k['nama_kecamatan'].toString() == value,
+                    orElse: () => {},
+                  );
+                  if (kecamatan.isEmpty) return;
+
+                  setState(() => _selectedKecamatan = value);
+                  final id = int.tryParse(kecamatan['id_kecamatan'].toString());
+                  _onKecamatanChanged(id);
+                },
               ),
               right: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,7 +387,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
                 validator: (v) {
-                  if ((v ?? '').isEmpty) return 'Konfirmasi kata sandi wajib diisi';
+                  if ((v ?? '').isEmpty)
+                    return 'Konfirmasi kata sandi wajib diisi';
                   if (v != _passwordController.text) {
                     return 'Kata sandi tidak sama';
                   }
