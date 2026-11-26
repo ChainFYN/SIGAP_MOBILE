@@ -431,7 +431,7 @@ class _RegisterPageState extends State<RegisterPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: _submit,
+        onPressed: _isLoading ? null : _submit,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF111827),
           foregroundColor: Colors.white,
@@ -440,17 +440,30 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_add_alt_1, color: Color(0xFF22C55E), size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Daftarkan Akun Pelapor Warga',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_add_alt_1,
+                    color: Color(0xFF22C55E),
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Daftarkan Akun Pelapor Warga',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -575,40 +588,40 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildDropdownItem({
-    required String label,
-    required String hint,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        const SizedBox(height: 7),
-        DropdownButtonFormField<String>(
-          value: value,
-          isExpanded: true,
-          validator: (v) => v == null ? 'Wajib dipilih' : null,
-          decoration: _inputDecoration(hint),
-          hint: Text(
-            hint,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-          ),
-          items: items
-              .map(
-                (item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item, overflow: TextOverflow.ellipsis),
-                ),
-              )
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
+  // Widget _buildDropdownItem({
+  //   required String label,
+  //   required String hint,
+  //   required String? value,
+  //   required List<String> items,
+  //   required ValueChanged<String?> onChanged,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _buildLabel(label),
+  //       const SizedBox(height: 7),
+  //       DropdownButtonFormField<String>(
+  //         value: value,
+  //         isExpanded: true,
+  //         validator: (v) => v == null ? 'Wajib dipilih' : null,
+  //         decoration: _inputDecoration(hint),
+  //         hint: Text(
+  //           hint,
+  //           style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+  //         ),
+  //         items: items
+  //             .map(
+  //               (item) => DropdownMenuItem<String>(
+  //                 value: item,
+  //                 child: Text(item, overflow: TextOverflow.ellipsis),
+  //               ),
+  //             )
+  //             .toList(),
+  //         onChanged: onChanged,
+  //       ),
+  //     ],
+  //   );
+  // }
 
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
