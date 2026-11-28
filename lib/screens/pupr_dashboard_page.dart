@@ -14,7 +14,6 @@ class PuprDashboardPage extends StatefulWidget {
 
 class _PuprDashboardPageState extends State<PuprDashboardPage> {
   int _selectedTabIndex = 0; // 0: Dikerjakan, 1: Disposisi, 2: Selesai
-  int _bottomNavIndex = 0; // 0: Tugas Aktif, 1: Riwayat
   String _selectedFilterPeriode = 'Semua';
   final List<String> _filterPeriodeOptions = [
     'Semua',
@@ -331,7 +330,6 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -1259,78 +1257,6 @@ class _PuprDashboardPageState extends State<PuprDashboardPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // === BOTTOM NAVIGATION BAR ===
-  Widget _buildBottomNav() {
-    return Container(
-      height: 68,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1523BC), Color(0xFF101B93), Color(0xFF0C146A)],
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildNavItem(
-            0,
-            Icons.assignment_outlined,
-            Icons.assignment,
-            'Tugas Aktif',
-          ),
-          _buildNavItem(
-            1,
-            Icons.inventory_2_outlined,
-            Icons.inventory_2,
-            'Riwayat',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData outlineIcon,
-    IconData filledIcon,
-    String label,
-  ) {
-    final isActive = _bottomNavIndex == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _bottomNavIndex = index;
-            if (index == 1) {
-              _selectedTabIndex = 2; // Pindah ke tab selesai saat klik Riwayat
-            } else {
-              _selectedTabIndex = 0;
-            }
-          });
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isActive ? filledIcon : outlineIcon,
-              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.6),
-              size: 22,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
