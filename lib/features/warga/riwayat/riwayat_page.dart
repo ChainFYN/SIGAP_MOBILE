@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/report_model.dart';
 import '../../../services/report_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'detail_tiket_page.dart';
 
 class RiwayatPage extends StatefulWidget {
   final String initialFilter;
@@ -741,7 +742,14 @@ class _RiwayatPageState extends State<RiwayatPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailTiketPage(report: report),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue[50],
                 elevation: 0,

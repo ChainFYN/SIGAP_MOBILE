@@ -104,6 +104,22 @@ class ReportService {
     }
   }
 
+  /// Mengambil detail laporan terbaru berdasarkan ID (GET /api/laporan/{id})
+  Future<ReportModel?> fetchReportDetail(String id) async {
+    try {
+      final response = await _dio.get('${ApiConstants.laporan}/$id');
+      if (response.data['success'] == true && response.data['data'] is Map) {
+        return ReportModel.fromJson(
+          Map<String, dynamic>.from(response.data['data'] as Map),
+        );
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetchReportDetail: $e');
+      return null;
+    }
+  }
+
   /// Mengirimkan Laporan Baru dengan format Multipart/Form-Data ke Laravel
   Future<Map<String, dynamic>> createReport({
     required int idJalan,

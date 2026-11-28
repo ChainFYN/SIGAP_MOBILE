@@ -14,6 +14,44 @@ class ReportPhoto {
   });
 }
 
+class ReportProgressItem {
+  final String judul;
+  final String catatan;
+  final String? waktu;
+
+  const ReportProgressItem({
+    required this.judul,
+    required this.catatan,
+    this.waktu,
+  });
+
+  factory ReportProgressItem.fromJson(Map<String, dynamic> json) {
+    final persen = json['persentase'] ?? json['progres_persen'];
+    final metode = json['metode']?.toString();
+    final catatanRaw =
+        json['catatan']?.toString() ??
+        json['deskripsi']?.toString() ??
+        json['keterangan']?.toString() ??
+        '-';
+    final judulRaw =
+        json['tahap']?.toString() ??
+        json['judul']?.toString() ??
+        (persen != null ? 'Progres $persen%' : 'Update Progres');
+
+    final parts = <String>[
+      if (persen != null && !judulRaw.contains('%')) 'Progres $persen%',
+      if (metode != null && metode.isNotEmpty) 'Metode: $metode',
+      catatanRaw,
+    ];
+
+    return ReportProgressItem(
+      judul: judulRaw,
+      catatan: parts.join(' • '),
+      waktu: json['created_at']?.toString() ?? json['waktu']?.toString(),
+    );
+  }
+}
+
 class ReportModel {
   final String id;
   final String kodeTiket;
@@ -28,6 +66,10 @@ class ReportModel {
   final String? fotoUrl;
   final List<ReportPhoto> photos;
   final DateTime createdAt;
+  final String? verifikator;
+  final String? catatanVerifikasi;
+  final DateTime? verifiedAt;
+  final List<ReportProgressItem> progresList;
 
   ReportModel({
     required this.id,
@@ -43,6 +85,10 @@ class ReportModel {
     this.fotoUrl,
     required this.photos,
     required this.createdAt,
+    this.verifikator,
+    this.catatanVerifikasi,
+    this.verifiedAt,
+    this.progresList = const [],
   });
 
   /// Mengubah JSON respons Laravel (LaporanResource) menjadi objek ReportModel
@@ -51,6 +97,7 @@ class ReportModel {
     final kategoriObj = json['kategori'] as Map<String, dynamic>? ?? {};
     final statusObj = json['status'] as Map<String, dynamic>? ?? {};
     final koordinatObj = json['koordinat'] as Map<String, dynamic>? ?? {};
+    final verifikasiObj = json['verifikasi'] as Map<String, dynamic>? ?? {};
 
     final lat = koordinatObj['latitude'];
     final lng = koordinatObj['longitude'];
@@ -68,6 +115,25 @@ class ReportModel {
     } else {
       tgl = DateTime.now();
     }
+
+    DateTime? tglVerifikasi;
+    final rawVerifiedAt =
+        verifikasiObj['verified_at'] ??
+        verifikasiObj['created_at'] ??
+        json['verified_at'];
+    if (rawVerifiedAt != null) {
+      tglVerifikasi = DateTime.tryParse(rawVerifiedAt.toString());
+    }
+
+    final rawProgres =
+        (json['progres'] ?? json['riwayat_progres'] ?? json['progress_logs'])
+            as List?;
+    final progresItems = rawProgres == null
+        ? const <ReportProgressItem>[]
+        : rawProgres
+              .whereType<Map<String, dynamic>>()
+              .map(ReportProgressItem.fromJson)
+              .toList();
 
     // Tangani URL foto agar tidak nyangkut di localhost
     String? rawFoto = json['foto_url']?.toString();
@@ -96,6 +162,14 @@ class ReportModel {
           rawFoto, // <-- Ganti baris ini dari json['foto_url'] menjadi rawFoto
       photos: [],
       createdAt: tgl,
+      verifikator:
+          verifikasiObj['oleh']?.toString() ??
+          json['diverifikasi_oleh']?.toString(),
+      catatanVerifikasi:
+          verifikasiObj['catatan']?.toString() ??
+          json['catatan_verifikasi']?.toString(),
+      verifiedAt: tglVerifikasi,
+      progresList: progresItems,
     );
   }
 }
