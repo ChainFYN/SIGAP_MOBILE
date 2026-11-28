@@ -235,10 +235,11 @@ class _HomePageState extends State<HomePage> {
             padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
             child: Row(
               children: [
-                Icon(
-                  Icons.location_on,
-                  color: Colors.white,
-                  size: compact ? 16 : 18,
+                Image.asset(
+                  'assets/images/logo_sigap_app.png',
+                  width: compact ? 26 : 30,
+                  height: compact ? 26 : 30,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -425,17 +426,15 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(width: compact ? 10 : 12),
               Container(
-                width: compact ? 42 : 52,
-                height: compact ? 42 : 52,
-                padding: const EdgeInsets.all(10),
+                width: compact ? 46 : 56,
+                height: compact ? 46 : 56,
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  Icons.people_alt_rounded,
-                  color: Colors.white,
-                  size: 28,
+                child: Image.asset(
+                  'assets/images/logo_sigap_app.png',
+                  fit: BoxFit.contain,
                 ),
               ),
             ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../warga/home/home_page.dart';
 import '../../../screens/pupr_dashboard_page.dart';
 import '../register/register_page.dart';
+import '../widgets/auth_road_background.dart';
 import '../../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -85,275 +86,277 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFEFEF),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: SizedBox(
-              width: 440,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 74,
-                    height: 74,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F5DCB),
-                      borderRadius: BorderRadius.circular(18),
+      backgroundColor: const Color(0xFFFCFEFF),
+      body: AuthRoadBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/logo_sigap_app.png',
+                      width: 84,
+                      height: 84,
+                      fit: BoxFit.contain,
                     ),
-                    child: const Icon(
-                      Icons.people_alt_rounded,
-                      color: Colors.white,
-                      size: 40,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Masuk Portal SIGAP',
+                      style: TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Masuk Portal SIGAP',
-                    style: TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontSize: 34,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Sistem Informasi Pelaporan Kerusakan Jalan (SIGAP) Kab. Jember',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sistem Informasi Pelaporan Kerusakan Jalan (SIGAP) Kab. Jember',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                  ),
-                  const SizedBox(height: 30),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'NIK atau Email',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
-                            ),
+                    const SizedBox(height: 30),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.96),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x140F172A),
+                            blurRadius: 28,
+                            offset: Offset(0, 12),
                           ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) {
-                                return 'NIK atau email wajib diisi';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Masukkan Email Anda',
-                              prefixIcon: const Icon(
-                                Icons.person_outline,
-                                color: Color(0xFF64748B),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2563EB),
-                                  width: 1.5,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'NIK atau Email',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 18),
-                          const Text(
-                            'Kata Sandi',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: passwordController,
-                            obscureText: obscurePassword,
-                            validator: (value) {
-                              if ((value ?? '').isEmpty) {
-                                return 'Kata sandi wajib diisi';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Minimial 8 karakter',
-                              prefixIcon: const Icon(
-                                Icons.lock_outline,
-                                color: Color(0xFF64748B),
-                              ),
-                              suffixIcon: IconButton(
-                                onPressed: () => setState(
-                                  () => obscurePassword = !obscurePassword,
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) {
+                                  return 'NIK atau email wajib diisi';
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Masukkan Email Anda',
+                                prefixIcon: const Icon(
+                                  Icons.person_outline,
+                                  color: Color(0xFF64748B),
                                 ),
-                                icon: Icon(
-                                  obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: const Color(0xFF64748B),
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2563EB),
-                                  width: 1.5,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: rememberMe,
-                                onChanged: (v) =>
-                                    setState(() => rememberMe = v ?? false),
-                                activeColor: const Color(0xFF0F5DCB),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                              const Expanded(
-                                child: Text(
-                                  'Ingat saya',
-                                  style: TextStyle(color: Color(0xFF334155)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : _login, // Cegah double tap saat loading
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0F5DCB),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Masuk ke Akun SIGAP',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Icon(
-                                          Icons.arrow_forward_rounded,
-                                          size: 18,
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          Align(
-                            alignment: Alignment.center,
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                const Text(
-                                  'Belum memiliki akun? ',
-                                  style: TextStyle(color: Color(0xFF64748B)),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const RegisterPage(),
-                                      ),
-                                    );
-                                  },
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: const Size(0, 0),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
                                   ),
-                                  child: const Text(
-                                    'Daftar sekarang',
-                                    style: TextStyle(
-                                      color: Color(0xFF2563EB),
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            const Text(
+                              'Kata Sandi',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: passwordController,
+                              obscureText: obscurePassword,
+                              validator: (value) {
+                                if ((value ?? '').isEmpty) {
+                                  return 'Kata sandi wajib diisi';
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Minimial 8 karakter',
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline,
+                                  color: Color(0xFF64748B),
+                                ),
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(
+                                    () => obscurePassword = !obscurePassword,
+                                  ),
+                                  icon: Icon(
+                                    obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2563EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: rememberMe,
+                                  onChanged: (v) =>
+                                      setState(() => rememberMe = v ?? false),
+                                  activeColor: const Color(0xFF0F5DCB),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const Expanded(
+                                  child: Text(
+                                    'Ingat saya',
+                                    style: TextStyle(color: Color(0xFF334155)),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: ElevatedButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : _login, // Cegah double tap saat loading
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0F5DCB),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Masuk ke Akun SIGAP',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            Align(
+                              alignment: Alignment.center,
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Belum memiliki akun? ',
+                                    style: TextStyle(color: Color(0xFF64748B)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const RegisterPage(),
+                                        ),
+                                      );
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(0, 0),
+                                    ),
+                                    child: const Text(
+                                      'Daftar sekarang',
+                                      style: TextStyle(
+                                        color: Color(0xFF2563EB),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

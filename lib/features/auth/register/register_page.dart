@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../warga/home/home_page.dart';
+import '../widgets/auth_road_background.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/report_service.dart';
 
@@ -137,19 +138,21 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFEFEF),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 30, 20, 32),
-            child: SizedBox(
-              width: 520,
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildFormCard(),
-                ],
+      backgroundColor: const Color(0xFFFCFEFF),
+      body: AuthRoadBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
+                    _buildFormCard(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -168,35 +171,11 @@ class _RegisterPageState extends State<RegisterPage> {
             icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           ),
         ),
-        Container(
-          width: 74,
-          height: 74,
-          decoration: BoxDecoration(
-            color: const Color(0xFF111827),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x1A0F172A),
-                blurRadius: 12,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: const Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                Icons.people_alt_rounded,
-                color: Color(0xFF60A5FA),
-                size: 38,
-              ),
-              Positioned(
-                right: 17,
-                top: 16,
-                child: Icon(Icons.add, color: Color(0xFF22C55E), size: 20),
-              ),
-            ],
-          ),
+        Image.asset(
+          'assets/images/logo_sigap_app.png',
+          width: 84,
+          height: 84,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 18),
         const Text(
@@ -222,9 +201,16 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140F172A),
+            blurRadius: 28,
+            offset: Offset(0, 12),
+          ),
+        ],
       ),
       child: Form(
         key: _formKey,

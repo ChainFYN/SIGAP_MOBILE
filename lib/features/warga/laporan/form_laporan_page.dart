@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../models/report_model.dart';
 import '../../../services/report_service.dart';
+import 'widgets/road_damage_icon.dart';
 
 class FormLaporanPage extends StatefulWidget {
   const FormLaporanPage({super.key});
@@ -417,7 +418,12 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
       titleSpacing: 0,
       title: Row(
         children: [
-          Icon(Icons.location_on, color: Colors.blue[800]),
+          Image.asset(
+            'assets/images/logo_sigap_app.png',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+          ),
           const SizedBox(width: 8),
           Text(
             'SIGAP',
@@ -639,31 +645,7 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           ),
           const SizedBox(height: 14),
 
-          // 3. Patokan Lokasi Detail
-          const Text(
-            'Patokan Detail Lokasi',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: _jalanPatokanController,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-            decoration: _inputDecoration(
-              hintText: 'Contoh: Depan Indomaret / Depan Rumah No. 42',
-              prefixIcon: const Icon(
-                Icons.near_me_outlined,
-                color: Color(0xFF64748B),
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 4. Koordinat GPS Box
+          // 3. Koordinat GPS Box
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -764,14 +746,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
-                  'WAJIB',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
               ),
             ],
           ),
@@ -813,17 +787,30 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
-                    child: Text(
-                      namaKat,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: isSelected
-                            ? const Color(0xFFEA580C)
-                            : const Color(0xFF334155),
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RoadDamageIcon(
+                          categoryName: namaKat,
+                          size: 24,
+                          isSelected: isSelected,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            namaKat,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? const Color(0xFFEA580C)
+                                  : const Color(0xFF334155),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -950,17 +937,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                                       : const Color(0xFF0F172A),
                                 ),
                               ),
-                              if (isHigh) ...[
-                                const SizedBox(width: 4),
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEF4444),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -1066,23 +1042,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  border: Border.all(color: const Color(0xFFFED7AA)),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${_photos.length} / 3 Foto',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFEA580C),
-                  ),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1129,15 +1088,6 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
                     style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Maksimal 3 Foto • JPG, PNG • Maks. 5MB',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1327,6 +1277,15 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
+        children: const [
+          TextSpan(
+            text: '*',
+            style: TextStyle(
+              color: Color(0xFFEF4444),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
