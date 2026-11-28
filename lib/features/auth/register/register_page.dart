@@ -42,6 +42,17 @@ class _RegisterPageState extends State<RegisterPage> {
     _loadKecamatan();
   }
 
+  @override
+  void dispose() {
+    _nikController.dispose();
+    _namaController.dispose();
+    _emailController.dispose();
+    _whatsappController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadKecamatan() async {
     final data = await _reportService.getKecamatan();
     if (mounted) {
@@ -387,8 +398,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   () => _obscureConfirmPassword = !_obscureConfirmPassword,
                 ),
                 validator: (v) {
-                  if ((v ?? '').isEmpty)
+                  if ((v ?? '').isEmpty) {
                     return 'Konfirmasi kata sandi wajib diisi';
+                  }
                   if (v != _passwordController.text) {
                     return 'Kata sandi tidak sama';
                   }
@@ -581,7 +593,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _buildLabel(label),
         const SizedBox(height: 7),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           validator: (v) => v == null ? 'Wajib dipilih' : null,
           decoration: _inputDecoration(hint),

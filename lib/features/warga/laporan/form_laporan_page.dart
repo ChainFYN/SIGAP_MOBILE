@@ -213,6 +213,8 @@ class _FormLaporanPageState extends State<FormLaporanPage> {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
+        maxWidth: 1024, // Batasi lebar maksimal 1024px
+        maxHeight: 1024, // Batasi tinggi maksimal 1024px
         imageQuality: 80,
       );
 

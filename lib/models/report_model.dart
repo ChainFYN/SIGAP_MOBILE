@@ -1,3 +1,5 @@
+import '../core/constants/api_constants.dart';
+
 class ReportPhoto {
   final String fileName;
   final String size;
@@ -57,17 +59,31 @@ class ReportModel {
         : 'GPS Terdata';
 
     DateTime tgl;
-    try {
-      tgl = DateTime.parse(
-        json['created_at'] ?? DateTime.now().toIso8601String(),
-      );
-    } catch (_) {
+    if (json['created_at'] != null) {
+      try {
+        tgl = DateTime.parse(json['created_at'].toString());
+      } catch (_) {
+        tgl = DateTime.now();
+      }
+    } else {
       tgl = DateTime.now();
     }
 
+    // Tangani URL foto agar tidak nyangkut di localhost
+    String? rawFoto = json['foto_url']?.toString();
+    if (rawFoto != null && rawFoto.contains('localhost:8000')) {
+      // Ambil domain dari baseUrl (misal: http://192.168.1.77:8000 atau Ngrok)
+      final host = ApiConstants.baseUrl.replaceAll('/api', '');
+      rawFoto = rawFoto.replaceAll('http://localhost:8000', host);
+    }
+
+    // Format kode tiket LP-YYYY-0001 (identik dengan Laravel)
+    final rawId = json['id']?.toString() ?? '0';
+    final kodeOtomatis = 'LP-${tgl.year}-${rawId.padLeft(4, '0')}';
+
     return ReportModel(
-      id: json['id']?.toString() ?? '',
-      kodeTiket: json['kode_tiket']?.toString() ?? 'LP-${json['id']}',
+      id: rawId,
+      kodeTiket: json['kode_tiket']?.toString() ?? kodeOtomatis,
       kecamatan: lokasi['kecamatan']?.toString() ?? '-',
       desa: lokasi['desa']?.toString() ?? '-',
       jalanPatokan: lokasi['jalan']?.toString() ?? '-',
@@ -76,7 +92,8 @@ class ReportModel {
       tingkatBahaya: json['tingkat_bahaya']?.toString() ?? 'Sedang',
       deskripsi: json['deskripsi']?.toString() ?? '-',
       status: statusObj['nama']?.toString() ?? 'Menunggu',
-      fotoUrl: json['foto_url']?.toString(),
+      fotoUrl:
+          rawFoto, // <-- Ganti baris ini dari json['foto_url'] menjadi rawFoto
       photos: [],
       createdAt: tgl,
     );
